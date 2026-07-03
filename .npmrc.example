@@ -1,0 +1,3 @@
+@ikea:registry=https://registry.example.internal/npm/
+//registry.example.internal/npm/:_authToken=${NPM_TOKEN}
+always-auth=true

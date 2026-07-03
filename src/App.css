@@ -1,0 +1,459 @@
+.cjm-page {
+  width: min(1600px, calc(100% - 2rem));
+  margin: 1rem auto 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.cjm-header {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(130deg, var(--panel), var(--panel-alt));
+}
+
+.cjm-header h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.4rem, 2.9vw, 2.2rem);
+}
+
+.cjm-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.kicker {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.feature-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.feature-toggle {
+  border: 1px solid #ccd8e7;
+  border-radius: 14px;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+}
+
+.feature-toggle input {
+  margin: 0 0 0.2rem;
+}
+
+.feature-toggle.active {
+  border-color: #1c4f8f;
+  box-shadow: 0 0 0 2px rgba(28, 79, 143, 0.14);
+}
+
+.feature-name {
+  font-weight: 700;
+}
+
+.feature-description {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.journey-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.stage-row {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem 0;
+}
+
+.stage-box {
+  background: #070707;
+  color: #fff;
+  border-radius: 1px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.65rem 0.4rem;
+}
+
+.journey-grid {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem 1rem;
+}
+
+.axis-labels {
+  display: grid;
+  grid-template-rows: auto 1fr 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.4rem 0.2rem;
+  align-items: center;
+}
+
+.axis-labels p {
+  margin: 0;
+  font-weight: 700;
+  color: #2a2d31;
+  max-width: 145px;
+  line-height: 1.07;
+}
+
+.axis-title {
+  align-self: start;
+  font-size: 1.2rem;
+}
+
+.plot-panel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.zoom-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border: 1px solid #ccd8e7;
+  border-radius: 999px;
+  padding: 0.25rem 0.35rem;
+  background: #fff;
+}
+
+.zoom-toolbar span {
+  min-width: 3rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.zoom-toolbar button {
+  margin: 0;
+  border: 1px solid #ccd8e7;
+  border-radius: 999px;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  background: #fff;
+  color: #22314a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.zoom-toolbar button:hover:not(:disabled) {
+  background: #f4f8ff;
+}
+
+.zoom-toolbar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.plot-viewport {
+  overflow: auto;
+  border: 1px solid #dde5ef;
+  border-radius: 10px;
+  background: rgba(250, 252, 255, 0.72);
+}
+
+.banner-strip {
+  min-height: 46px;
+  border-radius: 3px;
+  background: #ebebeb;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.banner-strip p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.banner-pill,
+.sentiment-pill {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: none;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(19, 25, 33, 0.14);
+}
+
+.plot-area {
+  position: relative;
+  min-width: 100%;
+  min-height: 440px;
+}
+
+.plot-area svg {
+  width: 100%;
+  height: 100%;
+}
+
+.guide-line {
+  stroke: #cfd4db;
+  stroke-dasharray: 0.8 1;
+  stroke-width: 0.2;
+}
+
+.journey-path {
+  fill: none;
+  stroke: #aaafb7;
+  stroke-width: 0.38;
+  transition: d 0.5s ease;
+}
+
+.node-shell {
+  fill: #fff;
+  stroke: rgba(19, 25, 33, 0.22);
+  stroke-width: 0.15;
+  transition:
+    cx 0.5s ease,
+    cy 0.5s ease;
+}
+
+.node-fill {
+  transition:
+    cx 0.5s ease,
+    cy 0.5s ease,
+    fill 0.5s ease;
+}
+
+.point-label {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.42rem;
+  line-height: 1.08;
+  font-weight: 700;
+  color: #2f3237;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  transition:
+    left 0.5s ease,
+    top 0.5s ease;
+}
+
+.point-label p {
+  margin: 0;
+}
+
+.point-label .sentiment-pill {
+  margin-top: 0.15rem;
+}
+
+.pain {
+  background: #d2001f;
+}
+
+.risk {
+  background: #ed6f2c;
+}
+
+.gain {
+  background: #149238;
+}
+
+@media (max-width: 1100px) {
+  .journey-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .axis-labels {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto;
+    max-width: unset;
+  }
+
+  .axis-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 820px) {
+  .point-label {
+    width: min(220px, 52vw) !important;
+  }
+}
+
+.view-switch {
+  display: inline-flex;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border: 1px solid #ccd8e7;
+  border-radius: 999px;
+  background: #fff;
+  width: fit-content;
+}
+
+.view-switch button {
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-weight: 700;
+  background: transparent;
+  color: #22314a;
+  cursor: pointer;
+}
+
+.view-switch button.active {
+  background: var(--cta);
+  color: #1f1f1f;
+}
+
+.chart-wrapper {
+  height: 560px;
+  padding: 1rem 1.2rem 1.4rem;
+}
+
+
+/* ── Proposal Navigator ── */
+.nav-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+}
+
+.proposal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.6rem 1rem;
+  background: #111;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.proposal-nav button {
+  margin: 0;
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.proposal-nav button:hover {
+  background: #222;
+  color: #fff;
+}
+
+.proposal-nav button.active {
+  background: #ffc800;
+  color: #111;
+  border-color: #ffc800;
+}
+
+.feature-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.feature-bar-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #47607d;
+  margin-right: 4px;
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid #ccd8e7;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  user-select: none;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.feature-chip:hover {
+  background: #f0f4f8;
+}
+
+.feature-chip.on {
+  background: #1c4f8f;
+  color: #fff;
+  border-color: #1c4f8f;
+}
+
+.feature-chip input {
+  display: none;
+}
+
+.proposal-body {
+  flex: 1;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.proposal-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.proposal-desc {
+  margin: 0 0 1rem;
+  font-size: 0.84rem;
+  color: #47607d;
+  line-height: 1.6;
+  max-width: 860px;
+  padding: 0.65rem 0.9rem;
+  background: #f0f6ff;
+  border-left: 3px solid #1c4f8f;
+  border-radius: 0 8px 8px 0;
+}
+
+.proposal-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.stage-header-row {
+  display: flex;
+  gap: 6px;
+  padding: 0.9rem 1rem 0;
+}
+
+.stage-header-box {
+  background: #111;
+  color: #fff;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: 700;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.82rem;
+}

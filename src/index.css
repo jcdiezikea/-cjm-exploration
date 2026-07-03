@@ -1,0 +1,38 @@
+:root {
+  --text: #15253b;
+  --muted: #47607d;
+  --line: #d7e1ec;
+  --panel: rgba(255, 255, 255, 0.8);
+  --panel-alt: rgba(239, 245, 251, 0.7);
+  --cta: #ffc800;
+  --mono-bg: #edf3f8;
+  --font-sans: 'Noto Sans IKEA', 'Noto Sans', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at 8% 10%, #ffe9a8 0%, transparent 28%),
+    radial-gradient(circle at 88% 22%, #b7d8ff 0%, transparent 30%),
+    linear-gradient(180deg, #f4f9ff 0%, #fdfefe 55%, #ecf4fc 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+code {
+  background: var(--mono-bg);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.35rem;
+}
