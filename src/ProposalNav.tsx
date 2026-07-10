@@ -11,6 +11,7 @@ import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
 import { Others } from './proposals/Others.tsx'
 import { InsightStrip } from './components/InsightStrip.tsx'
 import { StageDrawer } from './components/StageDrawer.tsx'
+import { ChatPanel } from './components/ChatPanel.tsx'
 
 const PROPOSALS = [
   { id: 1, label: 'P1 · Swimlane Map', component: P2SwimlaneMap },
@@ -98,6 +99,7 @@ export function ProposalNav() {
       </div>
 
       <StageDrawer stageName={selectedStage} onClose={() => setSelectedStage(null)} />
+      <ChatPanel />
     </div>
   )
 }
