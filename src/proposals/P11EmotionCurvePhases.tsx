@@ -158,6 +158,24 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
       <div className="proposal-card">
         {/* Clickable stage header buttons */}
         <div style={{ display: 'flex', gap: 6, padding: '0.9rem 1rem 0' }}>
+          <button
+            type="button"
+            onClick={() => setActiveStage(null)}
+            style={{
+              flexShrink: 0,
+              background: activeStage === null ? '#ffc800' : '#111',
+              color: activeStage === null ? '#111' : '#fff',
+              border: 'none',
+              borderRadius: 3,
+              fontWeight: 700,
+              padding: '0.55rem 0.75rem',
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+          >
+            All
+          </button>
           {STAGES.map((s) => {
             const isActive = activeStage === s.name
             const hasPoints = points.some((p) => stageOfPoint(p) === s.name)
@@ -189,8 +207,8 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
         {/* Contextual hint */}
         <div style={{ padding: '0.35rem 1rem 0', fontSize: '0.74rem', color: '#94a3b8', fontStyle: 'italic' }}>
           {activeStage
-            ? `${stagePoints.length} moment${stagePoints.length !== 1 ? 's' : ''} in ${activeStage} — click again to clear`
-            : 'Click a stage above to filter'}
+            ? `${stagePoints.length} moment${stagePoints.length !== 1 ? 's' : ''} in ${activeStage} — click a stage or All to change`
+            : 'All stages shown — click a stage to filter'}
         </div>
 
         {/* Chart */}

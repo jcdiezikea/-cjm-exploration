@@ -1,31 +1,27 @@
 import { useMemo, useState } from 'react'
 import { BASE_POINTS, FEATURES, type FeatureDefinition, type JourneyPoint } from './data/journeyData.ts'
-import { P1EmotionCurve } from './proposals/P1EmotionCurve.tsx'
 import { P2SwimlaneMap } from './proposals/P2SwimlaneMap.tsx'
 import { P3HorizonOverlay } from './proposals/P3HorizonOverlay.tsx'
-import { P4BusinessKPI } from './proposals/P4BusinessKPI.tsx'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
-import { P6OpportunityMatrix } from './proposals/P6OpportunityMatrix.tsx'
 import { P7PersonaOverlay } from './proposals/P7PersonaOverlay.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
 import { P9StoryMap } from './proposals/P9StoryMap.tsx'
 import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
 import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
+import { Others } from './proposals/Others.tsx'
 
 const PROPOSALS = [
-  { id: 1, label: 'P1 · Emotion Curve', component: P1EmotionCurve },
   { id: 2, label: 'P2 · Swimlane Map', component: P2SwimlaneMap },
   { id: 3, label: 'P3 · Horizon Overlay', component: P3HorizonOverlay },
-  { id: 4, label: 'P4 · Business KPI', component: P4BusinessKPI },
   { id: 5, label: 'P5 · Service Blueprint', component: P5ServiceBlueprint },
-  { id: 6, label: 'P6 · Opportunity Matrix', component: P6OpportunityMatrix },
   { id: 7, label: 'P7 · Persona Overlay', component: P7PersonaOverlay },
   { id: 8, label: 'P8 · Role Dashboard', component: P8RoleDashboard },
   { id: 9, label: 'P9 · Story Map', component: P9StoryMap },
   { id: 10, label: 'P10 · Heatmap', component: P10Heatmap },
   { id: 11, label: 'P11 · Phase Filters', component: P11EmotionCurvePhases },
   { id: 12, label: 'P12 · Customer & Co-worker', component: P12CoworkerOverlay },
+  { id: 13, label: 'Others', component: Others },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
@@ -40,7 +36,7 @@ function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]
 }
 
 export function ProposalNav() {
-  const [active, setActive] = useState(1)
+  const [active, setActive] = useState(2)
   const [activeFeatureIds, setActiveFeatureIds] = useState<string[]>([])
 
   function toggleFeature(id: string) {
