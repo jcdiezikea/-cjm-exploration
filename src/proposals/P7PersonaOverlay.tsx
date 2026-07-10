@@ -13,6 +13,21 @@ import { Line } from 'react-chartjs-2'
 import { STAGES, POWER_USER_POINTS, pointColor } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
+function wrapText(text: string, maxLen = 52): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    if (line.length + word.length + 1 > maxLen && line.length > 0) {
+      lines.push(line.trimEnd())
+      line = ''
+    }
+    line += word + ' '
+  }
+  if (line.trimEnd()) lines.push(line.trimEnd())
+  return lines
+}
+
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
 
 export function P7PersonaOverlay({ points }: ProposalProps) {
@@ -21,7 +36,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
       datasets: [
         {
           label: 'First-time buyer',
-          data: points.map((p) => ({ x: p.x, y: 100 - p.y })),
+          data: points.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
           parsing: false as const,
           tension: 0.45,
           borderColor: '#1c4f8f',
@@ -34,7 +49,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
         },
         {
           label: 'Returning customer',
-          data: POWER_USER_POINTS.map((p) => ({ x: p.x, y: 100 - p.y })),
+          data: POWER_USER_POINTS.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
           parsing: false as const,
           tension: 0.45,
           borderColor: '#149238',
@@ -85,11 +100,27 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
     plugins: {
       legend: { display: true, position: 'bottom' as const },
       tooltip: {
+        backgroundColor: '#fff',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        titleColor: '#111',
+        bodyColor: '#47607d',
+        padding: 12,
+        boxPadding: 4,
         callbacks: {
+          title: (items: { datasetIndex: number; dataIndex: number }[]) => {
+            const ctx = items[0]
+            if (!ctx) return ''
+            const p = ctx.datasetIndex === 0 ? points[ctx.dataIndex] : POWER_USER_POINTS[ctx.dataIndex]
+            const persona = ctx.datasetIndex === 0 ? 'First-time buyer' : 'Returning customer'
+            const icon = p?.sentiment === 'gain' ? '🟢' : p?.sentiment === 'risk' ? '🟠' : '🔴'
+            return `${icon}  ${persona}`
+          },
           label: (ctx: { datasetIndex: number; dataIndex: number }) => {
             const p = ctx.datasetIndex === 0 ? points[ctx.dataIndex] : POWER_USER_POINTS[ctx.dataIndex]
-            return p?.text ?? ''
+            return wrapText(p?.text ?? '')
           },
+          labelColor: () => ({ borderColor: 'transparent', backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 }),
         },
       },
       datalabels: { display: false },

@@ -28,6 +28,23 @@ type JourneyChartProps = {
   stages: string[]
 }
 
+type RawPoint = { x: number; y: number; text: string; sentiment: string }
+
+function wrapText(text: string, maxLen = 52): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    if (line.length + word.length + 1 > maxLen && line.length > 0) {
+      lines.push(line.trimEnd())
+      line = ''
+    }
+    line += word + ' '
+  }
+  if (line.trimEnd()) lines.push(line.trimEnd())
+  return lines
+}
+
 export function JourneyChart({ points, stages }: JourneyChartProps) {
   const data = useMemo(
     () => ({
@@ -38,6 +55,7 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
             x: point.x,
             y: 100 - point.y,
             text: point.text,
+            sentiment: point.sentiment,
           })),
           parsing: false as const,
           tension: 0.45,
@@ -98,8 +116,23 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: '#fff',
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          titleColor: '#111',
+          bodyColor: '#47607d',
+          padding: 12,
+          boxPadding: 4,
           callbacks: {
-            label: (ctx) => (ctx.raw as { text: string }).text,
+            title: (items) => {
+              const raw = items[0]?.raw as RawPoint | undefined
+              if (!raw) return ''
+              if (raw.sentiment === 'gain') return '🟢  Positive moment'
+              if (raw.sentiment === 'risk') return '🟠  Risk'
+              return '🔴  Pain point'
+            },
+            label: (ctx) => wrapText((ctx.raw as RawPoint).text),
+            labelColor: () => ({ borderColor: 'transparent', backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 }),
           },
         },
         datalabels: {

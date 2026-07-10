@@ -155,3 +155,21 @@ export const POWER_USER_POINTS: JourneyPoint[] = [
   { id: 'pu14', x: 94, y: 22, text: 'Strong pride in the completed room', sentiment: 'gain', labelPosition: 'top' },
   { id: 'pu15', x: 99, y: 28, text: 'Active in IKEA Family program', sentiment: 'gain', labelPosition: 'bottom' },
 ]
+
+export const COWORKER_POINTS: JourneyPoint[] = [
+  { id: 'cw1', x: 16, y: 56, text: 'Creating local inspiration content is effort-intensive with limited tooling', sentiment: 'risk', labelPosition: 'bottom' },
+  { id: 'cw2', x: 20, y: 64, text: 'Range complexity makes it hard to give consistent advice', sentiment: 'pain', labelPosition: 'top' },
+  { id: 'cw3', x: 24, y: 60, text: 'No unified tool to guide customers through range coordination', sentiment: 'risk', labelPosition: 'bottom' },
+  { id: 'cw4', x: 28, y: 70, text: 'Planning tool limitations frustrate both coworker and customer', sentiment: 'pain', labelPosition: 'top' },
+  { id: 'cw5', x: 30, y: 58, text: 'Explaining financing requires constant upskilling', sentiment: 'risk', labelPosition: 'top' },
+  { id: 'cw6', x: 34, y: 74, text: 'Cross-channel orders create significant reconciliation overhead', sentiment: 'pain', labelPosition: 'bottom' },
+  { id: 'cw7', x: 39, y: 62, text: 'Delivery cost objections require repetitive manual workarounds', sentiment: 'risk', labelPosition: 'top' },
+  { id: 'cw8', x: 40, y: 76, text: 'Appointment backlog is stressful and hard to manage in real time', sentiment: 'pain', labelPosition: 'top' },
+  { id: 'cw9', x: 43, y: 34, text: 'Completing a complex order end-to-end feels genuinely rewarding', sentiment: 'gain', labelPosition: 'top' },
+  { id: 'cw10', x: 50, y: 28, text: 'In-store validation moments feel purposeful and motivating', sentiment: 'gain', labelPosition: 'top' },
+  { id: 'cw11', x: 57, y: 36, text: 'Helping customers finalize their vision creates real connection', sentiment: 'gain', labelPosition: 'top' },
+  { id: 'cw12', x: 66, y: 55, text: 'Irrelevant upsell prompts at checkout create awkward situations', sentiment: 'risk', labelPosition: 'bottom' },
+  { id: 'cw13', x: 85, y: 65, text: 'Assembly support calls surge after high-volume delivery weekends', sentiment: 'pain', labelPosition: 'bottom' },
+  { id: 'cw14', x: 94, y: 30, text: 'Customer appreciation and success stories are genuinely motivating', sentiment: 'gain', labelPosition: 'top' },
+  { id: 'cw15', x: 99, y: 60, text: 'Limited tools to proactively re-engage customers after the sale', sentiment: 'risk', labelPosition: 'bottom' },
+]
