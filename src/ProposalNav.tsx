@@ -9,6 +9,8 @@ import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
 import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
 import { Others } from './proposals/Others.tsx'
+import { InsightStrip } from './components/InsightStrip.tsx'
+import { StageDrawer } from './components/StageDrawer.tsx'
 
 const PROPOSALS = [
   { id: 1, label: 'P1 · Swimlane Map', component: P2SwimlaneMap },
@@ -36,6 +38,7 @@ function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]
 export function ProposalNav() {
   const [active, setActive] = useState(1)
   const [activeFeatureIds, setActiveFeatureIds] = useState<string[]>([])
+  const [selectedStage, setSelectedStage] = useState<string | null>(null)
 
   function toggleFeature(id: string) {
     setActiveFeatureIds((cur) =>
@@ -84,9 +87,17 @@ export function ProposalNav() {
         ))}
       </div>
 
+      <InsightStrip />
+
       <div className="proposal-body">
-        <CurrentProposal points={journeyPoints} activeFeatureIds={activeFeatureIds} />
+        <CurrentProposal
+          points={journeyPoints}
+          activeFeatureIds={activeFeatureIds}
+          onStageClick={setSelectedStage}
+        />
       </div>
+
+      <StageDrawer stageName={selectedStage} onClose={() => setSelectedStage(null)} />
     </div>
   )
 }

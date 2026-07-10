@@ -63,7 +63,7 @@ const STAGE_CONTENT: Record<string, Record<string, string>> = {
 const SWIMLANES = ['Actions', 'Thoughts', 'Channels', 'Pain Points', 'KPIs', 'Features']
 const ROW_COLORS = ['#f0f7ff', '#f7f0ff', '#f0fff4', '#fff0f0', '#fafbfc', '#fff8e1']
 
-export function P2SwimlaneMap(_props: ProposalProps) {
+export function P2SwimlaneMap({ onStageClick }: ProposalProps) {
   return (
     <div>
       <h2 className="proposal-title">P2 — Swimlane Journey Map</h2>
@@ -83,7 +83,8 @@ export function P2SwimlaneMap(_props: ProposalProps) {
                 return (
                   <th
                     key={s.name}
-                    style={{ background: '#111', color: '#fff', padding: '0.6rem', textAlign: 'center', fontSize: '0.78rem', borderLeft: '1px solid #333', minWidth: 148 }}
+                    onClick={() => onStageClick?.(s.name)}
+                    style={{ background: '#111', color: '#fff', padding: '0.6rem', textAlign: 'center', fontSize: '0.78rem', borderLeft: '1px solid #333', minWidth: 148, cursor: 'pointer' }}
                   >
                     <div>{s.name}</div>
                     <span style={{ display: 'inline-block', marginTop: 4, padding: '1px 8px', borderRadius: 999, background: nc, fontSize: '0.7rem', fontWeight: 700 }}>

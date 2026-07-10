@@ -66,7 +66,7 @@ function wrapText(text: string, maxLen = 52): string[] {
   return lines
 }
 
-export function P11EmotionCurvePhases({ points }: ProposalProps) {
+export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [visible, setVisible] = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
 
@@ -275,9 +275,15 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
                   fontSize: '0.82rem',
                   cursor: 'pointer',
                   transition: 'background 0.15s, color 0.15s',
+                  position: 'relative',
                 }}
               >
                 {s.name}
+                <span
+                  onClick={(e) => { e.stopPropagation(); onStageClick?.(s.name) }}
+                  title="Stage details"
+                  style={{ position: 'absolute', top: 2, right: 4, fontSize: '0.6rem', opacity: 0.6, cursor: 'pointer' }}
+                >ℹ</span>
               </button>
             )
           })}

@@ -33,7 +33,7 @@ function cellColor(value: number, min: number, max: number, invert: boolean): st
   return lerpColor(bad, '#e6f4ea', '#ffeaea')
 }
 
-export function P10Heatmap(_props: ProposalProps) {
+export function P10Heatmap({ onStageClick }: ProposalProps) {
   const [sel, setSel] = useState<{ stage: string; metric: MetricKey } | null>(null)
 
   return (
@@ -48,7 +48,7 @@ export function P10Heatmap(_props: ProposalProps) {
             <tr>
               <th style={{ width: 145, background: '#111', color: '#fff', padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.8rem', position: 'sticky', left: 0, zIndex: 2 }}>Metric</th>
               {STAGES.map((s) => (
-                <th key={s.name} style={{ background: '#111', color: '#fff', padding: '0.6rem', textAlign: 'center', fontSize: '0.8rem', borderLeft: '1px solid #333', minWidth: 120 }}>{s.name}</th>
+                <th key={s.name} onClick={() => onStageClick?.(s.name)} style={{ background: '#111', color: '#fff', padding: '0.6rem', textAlign: 'center', fontSize: '0.8rem', borderLeft: '1px solid #333', minWidth: 120, cursor: 'pointer' }}>{s.name}</th>
               ))}
             </tr>
           </thead>

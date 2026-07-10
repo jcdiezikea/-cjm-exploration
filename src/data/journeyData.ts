@@ -54,7 +54,7 @@ export function pointColor(sentiment: Sentiment): string {
 // ─────────────────────────────────────────────────────────────────────────────
 import { ALL_ACTIVITIES, TASK_ITEMS, type RoadmapActivity } from './roadmapData.ts'
 
-const CJM_STAGES = ['Recognising', 'Exploring', 'Choosing', 'Committing', 'Receiving', 'Integrating', 'Living'] as const
+export const CJM_STAGES = ['Recognising', 'Exploring', 'Choosing', 'Committing', 'Receiving', 'Integrating', 'Living'] as const
 
 // Maps each FY27 activity id → the customer journey stage it belongs to
 const _CJM: Record<string, string> = {
@@ -67,7 +67,7 @@ const _CJM: Record<string, string> = {
   a31:'Receiving',a32:'Living',     a33:'Living',    a34:'Living',      a35:'Living',
   a36:'Living',   a37:'Living',     a38:'Living',    a39:'Living',
 }
-const cjmOf = (a: RoadmapActivity) => _CJM[a.id] ?? 'Choosing'
+export const cjmOf = (a: RoadmapActivity) => _CJM[a.id] ?? 'Choosing'
 
 export const STAGES: Stage[] = CJM_STAGES.map((name) => ({
   name,

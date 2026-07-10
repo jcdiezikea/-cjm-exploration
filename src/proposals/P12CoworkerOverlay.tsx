@@ -37,7 +37,7 @@ const CURVES: { id: CurveId; label: string; color: string; dash?: number[] }[] =
   { id: 'coworker', label: 'Co-worker', color: '#e85d04', dash: [7, 4] },
 ]
 
-export function P12CoworkerOverlay({ points }: ProposalProps) {
+export function P12CoworkerOverlay({ points, onStageClick }: ProposalProps) {
   const [visible, setVisible] = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
 
   function toggle(id: CurveId) {
@@ -177,7 +177,7 @@ export function P12CoworkerOverlay({ points }: ProposalProps) {
         {/* Stage headers */}
         <div className="stage-header-row">
           {STAGES.map((s) => (
-            <div key={s.name} className="stage-header-box" style={{ flexGrow: s.weight }}>{s.name}</div>
+            <div key={s.name} className="stage-header-box" onClick={() => onStageClick?.(s.name)} style={{ flexGrow: s.weight, cursor: 'pointer' }}>{s.name}</div>
           ))}
         </div>
 
