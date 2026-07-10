@@ -11,15 +11,15 @@ import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
 import { Others } from './proposals/Others.tsx'
 
 const PROPOSALS = [
-  { id: 2, label: 'P2 · Swimlane Map', component: P2SwimlaneMap },
-  { id: 5, label: 'P5 · Service Blueprint', component: P5ServiceBlueprint },
-  { id: 7, label: 'P7 · Persona Overlay', component: P7PersonaOverlay },
-  { id: 8, label: 'P8 · Role Dashboard', component: P8RoleDashboard },
-  { id: 9, label: 'P9 · Story Map', component: P9StoryMap },
-  { id: 10, label: 'P10 · Heatmap', component: P10Heatmap },
-  { id: 11, label: 'P11 · Phase Filters', component: P11EmotionCurvePhases },
-  { id: 12, label: 'P12 · Customer & Co-worker', component: P12CoworkerOverlay },
-  { id: 13, label: 'Others', component: Others },
+  { id: 1, label: 'P1 · Swimlane Map', component: P2SwimlaneMap },
+  { id: 2, label: 'P2 · Service Blueprint', component: P5ServiceBlueprint },
+  { id: 3, label: 'P3 · Persona Overlay', component: P7PersonaOverlay },
+  { id: 4, label: 'P4 · Role Dashboard', component: P8RoleDashboard },
+  { id: 5, label: 'P5 · Story Map', component: P9StoryMap },
+  { id: 6, label: 'P6 · Heatmap', component: P10Heatmap },
+  { id: 7, label: 'P7 · Phase Filters', component: P11EmotionCurvePhases },
+  { id: 8, label: 'P8 · Customer & Co-worker', component: P12CoworkerOverlay },
+  { id: 9, label: 'Others', component: Others },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
@@ -34,7 +34,7 @@ function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]
 }
 
 export function ProposalNav() {
-  const [active, setActive] = useState(2)
+  const [active, setActive] = useState(1)
   const [activeFeatureIds, setActiveFeatureIds] = useState<string[]>([])
 
   function toggleFeature(id: string) {
