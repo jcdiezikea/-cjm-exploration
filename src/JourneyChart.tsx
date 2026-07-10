@@ -140,7 +140,7 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
           anchor: 'center',
           color: '#2f3237',
           font: { weight: 'bold', size: 11 },
-          formatter: (value: { text: string }) => value.text,
+          formatter: (value: { text: string }) => value.text.length > 26 ? value.text.slice(0, 24) + '…' : value.text,
           textAlign: 'center',
         },
       },

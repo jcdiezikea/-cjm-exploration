@@ -2,23 +2,16 @@ import { STAGES, BACKLOG_ITEMS } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
 const CX_DATA: Record<string, Record<'action' | 'thought' | 'channel', string>> = {
-  Recognising: { action: 'Discovers IKEA via social/store/WOM', thought: '"I need to redesign my room"', channel: 'Instagram · Store · IKEA.com' },
-  Exploring: { action: 'Browses range and planning tools', thought: '"Too many options, I feel lost"', channel: 'App · Website · Store' },
-  Choosing: { action: 'Plans room layout, configures products', thought: '"Will this actually fit and match?"', channel: 'Planning tool · App · Consultant' },
-  Committing: { action: 'Books appointment and checks out', thought: '"The wait and cost are frustrating"', channel: 'Website · Store · Phone' },
-  Receiving: { action: 'Tracks and receives delivery', thought: '"The guarantee is a pleasant surprise"', channel: 'Delivery · Click & collect' },
-  Integrating: { action: 'Assembles and sets up room', thought: '"This took much longer than expected"', channel: 'Assembly guide · Support · YouTube' },
-  Living: { action: 'Uses room daily, shares online', thought: '"IKEA never checks in after purchase"', channel: 'Social · IKEA Family · App' },
+  Connect: { action: 'Plans and buys with connected tools across online, app, and in-store', thought: '"My planning progress is never lost — I can continue from any channel"', channel: 'IKEA.com · App · In-store kiosk · GPC' },
+  Build:   { action: 'Experiences consistent AI-powered 3D visuals across all planning tools', thought: '"Everything looks coherent and the tools feel intelligently designed"', channel: 'Kreativ · Configurators · IMC · IKG · AI layer' },
+  Empower: { action: 'Works with co-workers using Commercial Planning for confident advice', thought: '"My co-worker has the right tools and data to help me successfully"', channel: 'Commercial Planning · GPC · Analytics' },
+  Govern:  { action: 'Benefits from clear ownership, consistent delivery, and aligned experiences', thought: '"IKEA acts as one joined-up team with a clear, shared direction"', channel: 'Integrated roadmap · Home Planning Forum · Stakeholder comms' },
 }
 
 const BS_DATA: Record<string, Record<'team' | 'system' | 'process', string>> = {
-  Recognising: { team: 'Marketing', system: 'CMS / CDP', process: 'Audience segmentation + content targeting' },
-  Exploring: { team: 'Digital Product', system: 'IKEA App / Website', process: 'Personalization engine + range data sync' },
-  Choosing: { team: 'Planning Tools', system: 'Planning tool / Cart service', process: 'Config validation + availability check' },
-  Committing: { team: 'Commerce + Logistics', system: 'OMS + Appointment system', process: 'Order processing + slot allocation' },
-  Receiving: { team: 'Logistics + Fulfilment', system: 'WMS + Delivery tracking', process: 'Pick-pack-ship + last-mile routing' },
-  Integrating: { team: 'Customer Service', system: 'Support platform', process: 'Assembly support + return processing' },
-  Living: { team: 'CRM + Loyalty', system: 'CRM / IKEA Family', process: 'Re-engagement campaigns + loyalty rewards' },
+  Connect: { team: 'Digital Product & Planning Tools (Ingka + Inter)', system: 'GPC / Kreativ / Configurators / Cart service', process: 'Omni-channel design sync + purchase flow integration' },
+  Build:   { team: 'Inter IMC + Ingka Platform + Data teams',           system: 'IMC / IKG / AI inference layer / Planera',    process: '3D model pipeline + product knowledge graph + AI orchestration' },
+  Empower: { team: 'Inter M&CP + Ingka Commerce + CRM',                 system: 'Commercial Planning / Analytics / CRM',       process: 'Store design workflows + co-worker training + data tracking' },
 }
 
 export function P5ServiceBlueprint(_props: ProposalProps) {

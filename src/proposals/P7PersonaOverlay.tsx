@@ -35,7 +35,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
     () => ({
       datasets: [
         {
-          label: 'First-time buyer',
+          label: 'Full Roadmap',
           data: points.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
           parsing: false as const,
           tension: 0.45,
@@ -48,7 +48,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
           fill: false,
         },
         {
-          label: 'Returning customer',
+          label: 'Ingka-led',
           data: POWER_USER_POINTS.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
           parsing: false as const,
           tension: 0.45,
@@ -112,7 +112,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
             const ctx = items[0]
             if (!ctx) return ''
             const p = ctx.datasetIndex === 0 ? points[ctx.dataIndex] : POWER_USER_POINTS[ctx.dataIndex]
-            const persona = ctx.datasetIndex === 0 ? 'First-time buyer' : 'Returning customer'
+            const persona = ctx.datasetIndex === 0 ? 'Full Roadmap' : 'Ingka-led'
             const icon = p?.sentiment === 'gain' ? '🟢' : p?.sentiment === 'risk' ? '🟠' : '🔴'
             return `${icon}  ${persona}`
           },

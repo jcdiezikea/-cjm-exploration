@@ -2,27 +2,25 @@ import { STAGES } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
 const STAGE_COLORS: Record<string, string> = {
-  Recognising: '#6366f1',
-  Exploring: '#0ea5e9',
-  Choosing: '#f59e0b',
-  Committing: '#ef4444',
-  Receiving: '#10b981',
-  Integrating: '#8b5cf6',
-  Living: '#f97316',
+  Connect: '#1a3c6e',
+  Build:   '#0f5c3e',
+  Empower: '#7c2d3e',
+  Govern:  '#374151',
 }
 
 const OPPORTUNITIES = [
-  { id: 'o1', text: 'No local + personalized inspiration', stage: 'Recognising', effort: 3, severity: 6, users: 420 },
-  { id: 'o2', text: 'Choice overload', stage: 'Exploring', effort: 5, severity: 8, users: 610 },
-  { id: 'o3', text: 'Range coordination gap', stage: 'Exploring', effort: 4, severity: 7, users: 510 },
-  { id: 'o4', text: 'Blank-page planning paralysis', stage: 'Choosing', effort: 2, severity: 9, users: 780 },
-  { id: 'o5', text: 'Financing accessibility', stage: 'Choosing', effort: 6, severity: 7, users: 460 },
-  { id: 'o6', text: 'Omnichannel disconnect', stage: 'Choosing', effort: 8, severity: 10, users: 890 },
-  { id: 'o7', text: 'Appointment wait time', stage: 'Committing', effort: 5, severity: 8, users: 650 },
-  { id: 'o8', text: 'Delivery cost perception', stage: 'Committing', effort: 7, severity: 7, users: 540 },
-  { id: 'o9', text: 'Irrelevant checkout options', stage: 'Receiving', effort: 3, severity: 5, users: 320 },
-  { id: 'o10', text: 'Assembly effort underestimated', stage: 'Integrating', effort: 2, severity: 6, users: 480 },
-  { id: 'o11', text: 'Low post-purchase engagement', stage: 'Living', effort: 4, severity: 7, users: 670 },
+  { id: 'o1',  text: 'Omni-channel planning disconnect',           stage: 'Connect', effort: 5, severity: 9, users: 820 },
+  { id: 'o2',  text: 'System furniture missing from space planner', stage: 'Connect', effort: 5, severity: 8, users: 720 },
+  { id: 'o3',  text: 'New Kitchen Planner dependency (3rd-party)',  stage: 'Connect', effort: 9, severity: 8, users: 680 },
+  { id: 'o4',  text: 'Planning awareness & discoverability gap',    stage: 'Connect', effort: 3, severity: 6, users: 560 },
+  { id: 'o5',  text: 'Parallel 3D pipelines — inconsistent visuals', stage: 'Build', effort: 9, severity: 9, users: 1200 },
+  { id: 'o6',  text: 'No shared AI/recommendation foundation',     stage: 'Build',   effort: 9, severity: 8, users: 900 },
+  { id: 'o7',  text: 'Fragmented product data across planners',    stage: 'Build',   effort: 4, severity: 7, users: 740 },
+  { id: 'o8',  text: 'Revit dependency for in-store design',       stage: 'Empower', effort: 5, severity: 7, users: 600 },
+  { id: 'o9',  text: 'HFK data not productised',                   stage: 'Empower', effort: 5, severity: 6, users: 800 },
+  { id: 'o10', text: 'Unclear Ingka / Inter ownership boundaries', stage: 'Govern',  effort: 4, severity: 8, users: 500 },
+  { id: 'o11', text: 'No integrated FY27 roadmap visibility',      stage: 'Govern',  effort: 2, severity: 6, users: 480 },
+  { id: 'o12', text: 'DAA not yet finalised',                      stage: 'Govern',  effort: 4, severity: 7, users: 500 },
 ]
 
 export function P6OpportunityMatrix(_props: ProposalProps) {

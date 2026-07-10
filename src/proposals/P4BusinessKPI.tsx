@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { STAGES, STAGE_METRICS, BACKLOG_ITEMS } from '../data/journeyData.ts'
+import { STAGES, STAGE_METRICS, BACKLOG_ITEMS, STAGE_BOUNDS } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
 function MiniBar({ value, max, color }: { value: number; max: number; color: string }) {
@@ -23,10 +23,8 @@ export function P4BusinessKPI({ points }: ProposalProps) {
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {STAGES.map((s) => {
           const m = STAGE_METRICS.find((x) => x.stage === s.name)!
-          const stageIdx = STAGES.findIndex((st) => st.name === s.name)
-          const stageStart = (stageIdx / STAGES.length) * 100
-          const stageEnd = ((stageIdx + 1) / STAGES.length) * 100
-          const stagePts = points.filter((p) => p.x >= stageStart && p.x < stageEnd)
+          const bounds = STAGE_BOUNDS[s.name] ?? { start: 0, end: 100 }
+          const stagePts = points.filter((p) => p.x >= bounds.start && p.x < bounds.end)
           const gains = stagePts.filter((p) => p.sentiment === 'gain').length
           const pains = stagePts.filter((p) => p.sentiment === 'pain').length
           const risks = stagePts.filter((p) => p.sentiment === 'risk').length
