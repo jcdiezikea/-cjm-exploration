@@ -54,11 +54,24 @@ export function pointColor(sentiment: Sentiment): string {
 // ─────────────────────────────────────────────────────────────────────────────
 import { ALL_ACTIVITIES, TASK_ITEMS, type RoadmapActivity } from './roadmapData.ts'
 
-const OBJ_ORDER = ['obj1', 'obj2', 'obj3', 'obj4'] as const
+const CJM_STAGES = ['Recognising', 'Exploring', 'Choosing', 'Committing', 'Receiving', 'Integrating', 'Living'] as const
 
-export const STAGES: Stage[] = OBJ_ORDER.map((id) => ({
-  name: ALL_ACTIVITIES.find((a) => a.objectiveId === id)!.objectiveName,
-  weight: ALL_ACTIVITIES.filter((a) => a.objectiveId === id).length,
+// Maps each FY27 activity id → the customer journey stage it belongs to
+const _CJM: Record<string, string> = {
+  a1:'Choosing',  a2:'Choosing',   a3:'Exploring',  a4:'Committing',  a5:'Recognising',
+  a6:'Recognising',a7:'Choosing',   a8:'Exploring',  a9:'Exploring',   a10:'Committing',
+  a11:'Recognising',a12:'Recognising',a13:'Choosing', a14:'Choosing',   a15:'Choosing',
+  a16:'Choosing', a17:'Committing', a18:'Exploring', a19:'Recognising', a20:'Exploring',
+  a21:'Choosing', a22:'Exploring',  a23:'Exploring', a24:'Exploring',   a25:'Choosing',
+  a26:'Integrating',a27:'Integrating',a28:'Receiving',a29:'Receiving',  a30:'Integrating',
+  a31:'Receiving',a32:'Living',     a33:'Living',    a34:'Living',      a35:'Living',
+  a36:'Living',   a37:'Living',     a38:'Living',    a39:'Living',
+}
+const cjmOf = (a: RoadmapActivity) => _CJM[a.id] ?? 'Choosing'
+
+export const STAGES: Stage[] = CJM_STAGES.map((name) => ({
+  name,
+  weight: ALL_ACTIVITIES.filter((a) => cjmOf(a) === name).length,
 }))
 
 const _totalW = STAGES.reduce((s, st) => s + st.weight, 0)
@@ -76,7 +89,7 @@ export const STAGE_BOUNDS: Record<string, { start: number; end: number }> = (() 
 })()
 
 function actToPoint(a: RoadmapActivity, idxInObj: number, countInObj: number): JourneyPoint {
-  const { start, end } = STAGE_BOUNDS[a.objectiveName]
+  const { start, end } = STAGE_BOUNDS[cjmOf(a)]
   const margin = (end - start) * 0.04
   const x = countInObj === 1
     ? (start + end) / 2
@@ -88,8 +101,8 @@ function actToPoint(a: RoadmapActivity, idxInObj: number, countInObj: number): J
 }
 
 function pointsForFilter(filter: (a: RoadmapActivity) => boolean): JourneyPoint[] {
-  return OBJ_ORDER.flatMap((objId) => {
-    const acts = ALL_ACTIVITIES.filter((a) => a.objectiveId === objId && filter(a))
+  return CJM_STAGES.flatMap((stage) => {
+    const acts = ALL_ACTIVITIES.filter((a) => cjmOf(a) === stage && filter(a))
     return acts.map((a, i) => actToPoint(a, i, acts.length))
   })
 }
@@ -113,7 +126,7 @@ export const FEATURES: FeatureDefinition[] = [
 const _effortN = (e: string) => ({ S: 2, M: 5, L: 8, XL: 10 } as Record<string, number>)[e] ?? 5
 
 export const STAGE_METRICS: StageMetrics[] = STAGES.map((stage) => {
-  const acts = ALL_ACTIVITIES.filter((a) => a.objectiveName === stage.name)
+  const acts = ALL_ACTIVITIES.filter((a) => cjmOf(a) === stage.name)
   const high = acts.filter((a) => a.impact === 'High').length
   const pri  = acts.filter((a) => a.priority).length
   const avgE = Math.round(acts.reduce((s, a) => s + _effortN(a.effort), 0) / acts.length)

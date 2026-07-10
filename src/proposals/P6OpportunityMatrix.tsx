@@ -2,25 +2,28 @@ import { STAGES } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
 const STAGE_COLORS: Record<string, string> = {
-  Connect: '#1a3c6e',
-  Build:   '#0f5c3e',
-  Empower: '#7c2d3e',
-  Govern:  '#374151',
+  Recognising: '#6366f1',
+  Exploring:   '#0ea5e9',
+  Choosing:    '#f59e0b',
+  Committing:  '#ef4444',
+  Receiving:   '#10b981',
+  Integrating: '#8b5cf6',
+  Living:      '#f97316',
 }
 
 const OPPORTUNITIES = [
-  { id: 'o1',  text: 'Omni-channel planning disconnect',           stage: 'Connect', effort: 5, severity: 9, users: 820 },
-  { id: 'o2',  text: 'System furniture missing from space planner', stage: 'Connect', effort: 5, severity: 8, users: 720 },
-  { id: 'o3',  text: 'New Kitchen Planner dependency (3rd-party)',  stage: 'Connect', effort: 9, severity: 8, users: 680 },
-  { id: 'o4',  text: 'Planning awareness & discoverability gap',    stage: 'Connect', effort: 3, severity: 6, users: 560 },
-  { id: 'o5',  text: 'Parallel 3D pipelines — inconsistent visuals', stage: 'Build', effort: 9, severity: 9, users: 1200 },
-  { id: 'o6',  text: 'No shared AI/recommendation foundation',     stage: 'Build',   effort: 9, severity: 8, users: 900 },
-  { id: 'o7',  text: 'Fragmented product data across planners',    stage: 'Build',   effort: 4, severity: 7, users: 740 },
-  { id: 'o8',  text: 'Revit dependency for in-store design',       stage: 'Empower', effort: 5, severity: 7, users: 600 },
-  { id: 'o9',  text: 'HFK data not productised',                   stage: 'Empower', effort: 5, severity: 6, users: 800 },
-  { id: 'o10', text: 'Unclear Ingka / Inter ownership boundaries', stage: 'Govern',  effort: 4, severity: 8, users: 500 },
-  { id: 'o11', text: 'No integrated FY27 roadmap visibility',      stage: 'Govern',  effort: 2, severity: 6, users: 480 },
-  { id: 'o12', text: 'DAA not yet finalised',                      stage: 'Govern',  effort: 4, severity: 7, users: 500 },
+  { id: 'o1',  text: 'Planning awareness & discoverability gap',          stage: 'Recognising', effort: 3, severity: 6, users: 560 },
+  { id: 'o2',  text: 'No AI inspiration / Find My Fit yet',               stage: 'Recognising', effort: 5, severity: 7, users: 480 },
+  { id: 'o3',  text: 'Room creation too technical — AI/scanning needed',  stage: 'Exploring',   effort: 6, severity: 8, users: 700 },
+  { id: 'o4',  text: 'Visual inconsistency across planning tools',        stage: 'Exploring',   effort: 7, severity: 7, users: 820 },
+  { id: 'o5',  text: 'System furniture missing from space planning',      stage: 'Choosing',    effort: 5, severity: 9, users: 940 },
+  { id: 'o6',  text: 'Parallel 3D pipelines — inaccurate visuals',        stage: 'Choosing',    effort: 9, severity: 9, users: 1200 },
+  { id: 'o7',  text: 'Kitchen Planner 3rd-party dependency',              stage: 'Choosing',    effort: 9, severity: 8, users: 680 },
+  { id: 'o8',  text: 'Omnichannel design editing not available',          stage: 'Committing',  effort: 8, severity: 9, users: 880 },
+  { id: 'o9',  text: 'HFK planning data not linked to fulfilment',        stage: 'Receiving',   effort: 5, severity: 6, users: 800 },
+  { id: 'o10', text: 'Revit dependency for in-store design',              stage: 'Integrating', effort: 5, severity: 7, users: 600 },
+  { id: 'o11', text: 'Unclear Ingka / Inter ownership boundaries',        stage: 'Living',      effort: 4, severity: 8, users: 500 },
+  { id: 'o12', text: 'No shared taxonomy or architecture north star',     stage: 'Living',      effort: 4, severity: 7, users: 420 },
 ]
 
 export function P6OpportunityMatrix(_props: ProposalProps) {
