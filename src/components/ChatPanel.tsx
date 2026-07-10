@@ -242,6 +242,74 @@ function answer(question: string): string {
   return `I'm not sure how to answer that from the available data. Type **help** to see what I can answer, or try asking about a specific stage like "Tell me about Choosing" or "What's in T1?"`
 }
 
+// ── Gemini system prompt ──────────────────────────────────────────────────────
+function buildSystemPrompt(): string {
+  const actLines = ALL_ACTIVITIES.map((a) =>
+    `${a.id}|${a.title}|stage:${cjmOf(a)}|effort:${a.effort}|impact:${a.impact}|priority:${a.priority}|objective:${a.objectiveName}|tags:${a.tags.join(',')}`
+  ).join('\n')
+
+  const metricLines = STAGE_METRICS.map((m) =>
+    `${m.stage}: NPS=${m.nps}, conv=${m.conversion}%, dropOff=${m.dropOff}%, effort=${m.effort}/10`
+  ).join('\n')
+
+  const backlogLines = BACKLOG_ITEMS.map((b) =>
+    `[${b.horizon}] ${b.stage} — ${b.title} (${b.storyPoints}sp)`
+  ).join('\n')
+
+  const featureLines = FEATURES.map((f) => `${f.name}: ${f.description}`).join('\n')
+
+  return `You are an AI assistant embedded in an IKEA FY27 Home Planning Customer Journey Map (CJM) visualisation tool.
+Answer questions about the data concisely and factually. Use **bold** for emphasis and bullet points where helpful.
+Keep answers under 300 words unless the user asks for a full list. Respond only about this FY27 data.
+
+## Journey stages (in order)
+${CJM_STAGES.join(' → ')}
+
+## Stage metrics
+${metricLines}
+
+## All ${ALL_ACTIVITIES.length} activities  (id|title|stage|effort S/M/L/XL|impact Low/Med/High|priority|objective|tags)
+${actLines}
+
+## Backlog items (${BACKLOG_ITEMS.length} total)
+${backlogLines}
+
+## Feature toggles
+${featureLines}`
+}
+
+// ── Gemini API call ───────────────────────────────────────────────────────────
+type GeminiContent = { role: string; parts: { text: string }[] }
+
+async function askGemini(_question: string, history: { role: 'user' | 'bot'; text: string }[], key: string): Promise<string> {
+  // Convert chat history to Gemini format (skip initial welcome bot message)
+  const contents: GeminiContent[] = history
+    .slice(1)           // drop welcome message
+    .slice(-12)         // last 6 exchanges to keep prompt compact
+    .map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }))
+
+  const body = {
+    systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+    contents,
+    generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+  }
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(key)}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+  )
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}) as Record<string, unknown>) as { error?: { message?: string } }
+    throw new Error(err?.error?.message ?? `HTTP ${res.status}`)
+  }
+
+  const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('Empty response from Gemini')
+  return text
+}
+
 // ── Suggested prompts ─────────────────────────────────────────────────────────
 const SUGGESTIONS = [
   'Executive summary',
@@ -259,6 +327,9 @@ type Msg = { role: 'user' | 'bot'; text: string }
 
 export function ChatPanel() {
   const [open, setOpen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('gemini-api-key') ?? '')
+  const [keyInput, setKeyInput] = useState<string>(() => localStorage.getItem('gemini-api-key') ?? '')
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'bot',
@@ -266,18 +337,51 @@ export function ChatPanel() {
     },
   ])
   const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  function send(text: string) {
+  function saveKey() {
+    const k = keyInput.trim()
+    if (!k) return
+    localStorage.setItem('gemini-api-key', k)
+    setApiKey(k)
+    setShowSettings(false)
+  }
+
+  function clearKey() {
+    localStorage.removeItem('gemini-api-key')
+    setApiKey('')
+    setKeyInput('')
+  }
+
+  async function send(text: string) {
     const t = text.trim()
-    if (!t) return
-    const reply = answer(t)
-    setMessages((prev) => [...prev, { role: 'user', text: t }, { role: 'bot', text: reply }])
+    if (!t || isLoading) return
+
+    const newMessages: Msg[] = [...messages, { role: 'user', text: t }]
+    setMessages(newMessages)
     setInput('')
+
+    if (!apiKey) {
+      setMessages([...newMessages, { role: 'bot', text: answer(t) }])
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const reply = await askGemini(t, newMessages, apiKey)
+      setMessages([...newMessages, { role: 'bot', text: reply }])
+    } catch (e) {
+      const errMsg = (e as Error).message
+      const fallback = `⚠️ **Gemini error:** ${errMsg}\n\nFalling back to rule-based answer:\n\n${answer(t)}`
+      setMessages([...newMessages, { role: 'bot', text: fallback }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const isFirstMessage = messages.length === 1
@@ -309,7 +413,7 @@ export function ChatPanel() {
         right: '1.5rem',
         zIndex: 60,
         width: 390,
-        maxHeight: 520,
+        maxHeight: 560,
         background: '#fff',
         borderRadius: 16,
         boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
@@ -324,10 +428,84 @@ export function ChatPanel() {
         transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s',
       }}>
         {/* Header */}
-        <div style={{ background: '#111', color: '#fff', padding: '0.7rem 1rem', flexShrink: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>💬 Ask the data</div>
-          <div style={{ fontSize: '0.62rem', color: '#888', marginTop: 1 }}>FY27 Home Planning · rule-based · no API key needed</div>
+        <div style={{
+          background: '#111', color: '#fff', padding: '0.7rem 1rem',
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>💬 Ask the data</div>
+            <div style={{ fontSize: '0.62rem', color: apiKey ? '#4ade80' : '#888', marginTop: 1 }}>
+              {apiKey ? 'FY27 Home Planning · Gemini AI active' : 'FY27 Home Planning · rule-based · add key for AI ⚙'}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSettings((s) => !s)}
+            title="Gemini API key settings"
+            style={{
+              background: showSettings ? '#2a2a2a' : 'none',
+              border: 'none',
+              color: apiKey ? '#4ade80' : '#888',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              padding: '4px 7px',
+              borderRadius: 6,
+              lineHeight: 1,
+              transition: 'background 0.15s',
+            }}
+          >
+            ⚙
+          </button>
         </div>
+
+        {/* Settings panel */}
+        {showSettings && (
+          <div style={{ background: '#1a1a1a', padding: '0.65rem 1rem', borderBottom: '1px solid #2d2d2d', flexShrink: 0 }}>
+            <div style={{ fontSize: '0.63rem', color: '#999', marginBottom: 5 }}>
+              Google Gemini API key — stored in your browser only, sent only to Google.
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                type="password"
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveKey()}
+                placeholder="AIzaSy…"
+                style={{
+                  flex: 1, background: '#2a2a2a', border: '1px solid #3a3a3a',
+                  borderRadius: 6, padding: '0.35rem 0.6rem',
+                  fontSize: '0.68rem', color: '#fff', fontFamily: 'monospace', outline: 'none',
+                }}
+              />
+              <button
+                onClick={saveKey}
+                style={{
+                  background: '#ffc800', color: '#111', border: 'none',
+                  borderRadius: 6, padding: '0 0.75rem',
+                  fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Save
+              </button>
+              {apiKey && (
+                <button
+                  onClick={clearKey}
+                  style={{
+                    background: 'none', color: '#999', border: '1px solid #3a3a3a',
+                    borderRadius: 6, padding: '0 0.6rem', fontSize: '0.68rem', cursor: 'pointer',
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: '0.6rem', marginTop: 5 }}>
+              {apiKey
+                ? <span style={{ color: '#4ade80' }}>✓ Key saved — Gemini 1.5 Flash active</span>
+                : <span style={{ color: '#666' }}>Get a free key at <strong style={{ color: '#aaa' }}>aistudio.google.com</strong></span>
+              }
+            </div>
+          </div>
+        )}
 
         {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -346,6 +524,20 @@ export function ChatPanel() {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{
+                padding: '0.55rem 0.9rem',
+                borderRadius: '14px 14px 14px 3px',
+                background: '#f0f4f8',
+                fontSize: '0.72rem',
+                color: 'var(--muted)',
+                fontStyle: 'italic',
+              }}>
+                Thinking…
+              </div>
+            </div>
+          )}
           <div ref={endRef} />
         </div>
 
@@ -380,22 +572,24 @@ export function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Ask about stages, activities, backlog…"
+            disabled={isLoading}
             style={{
               flex: 1, border: '1px solid var(--line)', borderRadius: 8,
               padding: '0.45rem 0.7rem', fontSize: '0.72rem',
               background: '#f8fafc', outline: 'none',
               fontFamily: 'inherit',
+              opacity: isLoading ? 0.5 : 1,
             }}
           />
           <button
             onClick={() => send(input)}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isLoading}
             style={{
               background: '#1c4f8f', color: '#fff',
               border: 'none', borderRadius: 8,
               padding: '0 0.85rem', fontSize: '0.9rem',
-              cursor: input.trim() ? 'pointer' : 'default',
-              opacity: input.trim() ? 1 : 0.35,
+              cursor: (input.trim() && !isLoading) ? 'pointer' : 'default',
+              opacity: (input.trim() && !isLoading) ? 1 : 0.35,
               transition: 'opacity 0.15s',
             }}
           >
