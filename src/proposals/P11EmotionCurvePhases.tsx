@@ -217,76 +217,130 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
         </div>
       </div>
 
-      {/* Detail panel — only shown when a stage is active */}
-      {activeStage && (
-        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+      {/* Detail panel — always visible */}
+      <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
 
-          {/* Left: moments in this stage */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-              Moments in {activeStage}
-              {activeMetrics && (
-                <span style={{ padding: '2px 8px', borderRadius: 999, background: npsColor(activeMetrics.nps), color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  NPS {activeMetrics.nps > 0 ? '+' : ''}{activeMetrics.nps}
-                </span>
-              )}
-            </div>
-            {stagePoints.length === 0 ? (
-              <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>No mapped moments in this stage yet.</p>
-            ) : (
-              stagePoints.map((p) => (
-                <div key={p.id} style={{ display: 'flex', gap: 8, padding: '0.45rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
-                  <div>
-                    <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{p.text}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, textTransform: 'capitalize' }}>
-                      {p.sentiment} · satisfaction {100 - p.y}%
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Right: backlog + KPI mini-cards */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* KPI mini row */}
-            {activeMetrics && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
-                {[
-                  { label: 'NPS', value: `${activeMetrics.nps > 0 ? '+' : ''}${activeMetrics.nps}`, color: npsColor(activeMetrics.nps) },
-                  { label: 'Conv.', value: `${activeMetrics.conversion}%`, color: '#1c4f8f' },
-                  { label: 'Drop', value: `${activeMetrics.dropOff}%`, color: '#d2001f' },
-                  { label: 'Effort', value: `${activeMetrics.effort}/10`, color: '#ed6f2c' },
-                ].map(({ label, value, color }) => (
-                  <div key={label} style={{ background: '#f7f9fb', borderRadius: 8, padding: '0.45rem 0.5rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>{label}</div>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color }}>{value}</div>
-                  </div>
-                ))}
+        {activeStage ? (
+          <>
+            {/* Left: moments in active stage */}
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Moments in {activeStage}
+                {activeMetrics && (
+                  <span style={{ padding: '2px 8px', borderRadius: 999, background: npsColor(activeMetrics.nps), color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
+                    NPS {activeMetrics.nps > 0 ? '+' : ''}{activeMetrics.nps}
+                  </span>
+                )}
               </div>
-            )}
-
-            {/* Backlog */}
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 6 }}>Backlog</div>
-              {stageBacklog.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>No backlog items for this stage.</p>
+              {stagePoints.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>No mapped moments in this stage yet.</p>
               ) : (
-                stageBacklog.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.35rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.82rem' }}>
-                    <span style={{ padding: '2px 7px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.68rem' }}>
-                      {item.horizon}
-                    </span>
-                    <span style={{ flex: 1 }}>{item.title}</span>
-                    <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{item.storyPoints}sp · {item.team}</span>
+                stagePoints.map((p) => (
+                  <div key={p.id} style={{ display: 'flex', gap: 8, padding: '0.45rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                    <div>
+                      <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{p.text}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, textTransform: 'capitalize' }}>
+                        {p.sentiment} · satisfaction {100 - p.y}%
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
             </div>
-          </div>
-        </div>
-      )}
+
+            {/* Right: backlog + KPI mini-cards */}
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {activeMetrics && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+                  {[
+                    { label: 'NPS', value: `${activeMetrics.nps > 0 ? '+' : ''}${activeMetrics.nps}`, color: npsColor(activeMetrics.nps) },
+                    { label: 'Conv.', value: `${activeMetrics.conversion}%`, color: '#1c4f8f' },
+                    { label: 'Drop', value: `${activeMetrics.dropOff}%`, color: '#d2001f' },
+                    { label: 'Effort', value: `${activeMetrics.effort}/10`, color: '#ed6f2c' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} style={{ background: '#f7f9fb', borderRadius: 8, padding: '0.45rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>{label}</div>
+                      <div style={{ fontSize: '1rem', fontWeight: 800, color }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 6 }}>Backlog</div>
+                {stageBacklog.length === 0 ? (
+                  <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>No backlog items for this stage.</p>
+                ) : (
+                  stageBacklog.map((item) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.35rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.82rem' }}>
+                      <span style={{ padding: '2px 7px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.68rem' }}>
+                        {item.horizon}
+                      </span>
+                      <span style={{ flex: 1 }}>{item.title}</span>
+                      <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{item.storyPoints}sp · {item.team}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Left: all moments grouped by stage */}
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 10 }}>All Moments</div>
+              {STAGES.map((s) => {
+                const stagePts = points.filter((p) => stageOfPoint(p) === s.name)
+                const sm = STAGE_METRICS.find((m) => m.stage === s.name)
+                if (stagePts.length === 0) return null
+                return (
+                  <div key={s.name} style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.name}</span>
+                      {sm && (
+                        <span style={{ padding: '1px 6px', borderRadius: 999, background: npsColor(sm.nps), color: '#fff', fontSize: '0.67rem', fontWeight: 700 }}>
+                          NPS {sm.nps > 0 ? '+' : ''}{sm.nps}
+                        </span>
+                      )}
+                    </div>
+                    {stagePts.map((p) => (
+                      <div key={p.id} style={{ display: 'flex', gap: 7, padding: '0.35rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                        <div>
+                          <div style={{ fontSize: '0.8rem', lineHeight: 1.4 }}>{p.text}</div>
+                          <div style={{ fontSize: '0.67rem', color: '#94a3b8', marginTop: 1, textTransform: 'capitalize' }}>{p.sentiment}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Right: all backlog grouped by horizon */}
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>All Backlog Items</div>
+              {(['T1', 'T2', 'T3'] as const).map((horizon) => {
+                const items = BACKLOG_ITEMS.filter((b) => b.horizon === horizon)
+                const horizonLabel = horizon === 'T1' ? 'T1 — Now' : horizon === 'T2' ? 'T2 — Near' : 'T3 — Future'
+                const horizonColor = horizon === 'T1' ? '#149238' : horizon === 'T2' ? '#ed6f2c' : '#666'
+                const horizonBg = horizon === 'T1' ? '#e6f4ea' : horizon === 'T2' ? '#fff3e8' : '#f0f4f8'
+                return (
+                  <div key={horizon}>
+                    <div style={{ fontWeight: 700, fontSize: '0.78rem', color: horizonColor, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5, background: horizonBg, display: 'inline-block', padding: '2px 8px', borderRadius: 6 }}>{horizonLabel}</div>
+                    {items.map((item) => (
+                      <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.32rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.81rem' }}>
+                        <span style={{ flex: 1 }}>{item.title}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{item.stage} · {item.storyPoints}sp</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
