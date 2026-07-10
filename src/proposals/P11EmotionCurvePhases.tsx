@@ -12,6 +12,7 @@ import {
   STAGES,
   STAGE_METRICS,
   BACKLOG_ITEMS,
+  COWORKER_POINTS,
   pointColor,
   type JourneyPoint,
 } from '../data/journeyData.ts'
@@ -44,47 +45,103 @@ function npsColor(nps: number) {
   return nps >= 10 ? '#149238' : nps >= 0 ? '#ed6f2c' : '#d2001f'
 }
 
+type CurveId = 'customer' | 'coworker'
+const CURVES: { id: CurveId; label: string; color: string; dash?: number[] }[] = [
+  { id: 'customer', label: 'Customer', color: '#1c4f8f' },
+  { id: 'coworker', label: 'Co-worker', color: '#e85d04', dash: [7, 4] },
+]
+
+function wrapText(text: string, maxLen = 52): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    if (line.length + word.length + 1 > maxLen && line.length > 0) {
+      lines.push(line.trimEnd())
+      line = ''
+    }
+    line += word + ' '
+  }
+  if (line.trimEnd()) lines.push(line.trimEnd())
+  return lines
+}
+
 export function P11EmotionCurvePhases({ points }: ProposalProps) {
   const [activeStage, setActiveStage] = useState<string | null>(null)
+  const [visible, setVisible] = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
 
-  const stagePoints = useMemo(
-    () => (activeStage ? points.filter((p) => stageOfPoint(p) === activeStage) : []),
-    [activeStage, points],
+  function toggle(id: CurveId) {
+    setVisible((cur) => {
+      const next = new Set(cur)
+      if (next.has(id)) {
+        if (next.size > 1) next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const custStagePts = useMemo(
+    () => (activeStage && visible.has('customer') ? points.filter((p) => stageOfPoint(p) === activeStage) : []),
+    [activeStage, points, visible],
   )
+  const cwStagePts = useMemo(
+    () => (activeStage && visible.has('coworker') ? COWORKER_POINTS.filter((p) => stageOfPoint(p) === activeStage) : []),
+    [activeStage, visible],
+  )
+  const totalStageMoments = custStagePts.length + cwStagePts.length
+
   const stageBacklog = useMemo(
     () => (activeStage ? BACKLOG_ITEMS.filter((b) => b.stage === activeStage) : []),
     [activeStage],
   )
   const activeMetrics = STAGE_METRICS.find((m) => m.stage === activeStage)
 
-  // Per-point styling: highlight active stage, dim others
-  const chartData = useMemo(
-    () => ({
-      datasets: [
-        {
-          data: points.map((p) => ({ x: p.x, y: 100 - p.y })),
-          parsing: false as const,
-          tension: 0.45,
-          borderColor: '#1c4f8f',
-          borderWidth: 2.5,
-          pointRadius: points.map((p) =>
-            !activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4,
-          ),
-          pointBackgroundColor: points.map((p) =>
-            !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
-          ),
-          pointBorderColor: points.map((p) =>
-            !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
-          ),
-          pointBorderWidth: 2,
-          fill: false,
-        },
-      ],
-    }),
-    [points, activeStage],
-  )
+  const chartData = useMemo(() => {
+    const datasets = []
+    if (visible.has('customer')) {
+      datasets.push({
+        label: 'Customer',
+        data: points.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
+        parsing: false as const,
+        tension: 0.45,
+        borderColor: '#1c4f8f',
+        borderWidth: 2.5,
+        pointRadius: points.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
+        pointBackgroundColor: points.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
+        ),
+        pointBorderColor: points.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
+        ),
+        pointBorderWidth: 2,
+        fill: false,
+      })
+    }
+    if (visible.has('coworker')) {
+      datasets.push({
+        label: 'Co-worker',
+        data: COWORKER_POINTS.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
+        parsing: false as const,
+        tension: 0.45,
+        borderColor: '#e85d04',
+        borderDash: [7, 4],
+        borderWidth: 2.5,
+        pointRadius: COWORKER_POINTS.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
+        pointBackgroundColor: COWORKER_POINTS.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
+        ),
+        pointBorderColor: COWORKER_POINTS.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
+        ),
+        pointBorderWidth: 2,
+        fill: false,
+      })
+    }
+    return { datasets }
+  }, [points, activeStage, visible])
 
-  // Inline plugin to draw a yellow highlight band behind the active stage
   const highlightPlugin = useMemo(
     () => ({
       id: 'stageHighlight',
@@ -138,25 +195,47 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: '#fff',
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          titleColor: '#111',
+          bodyColor: '#47607d',
+          padding: 12,
+          boxPadding: 4,
           callbacks: {
-            label: (ctx: { dataIndex: number }) => points[ctx.dataIndex]?.text ?? '',
+            title: (items: { datasetIndex: number; dataIndex: number }[]) => {
+              const ctx = items[0]
+              if (!ctx) return ''
+              const isCoworker = ctx.datasetIndex === (visible.has('customer') ? 1 : 0) && visible.has('coworker')
+              const src = isCoworker ? COWORKER_POINTS : points
+              const p = src[ctx.dataIndex]
+              const persona = isCoworker ? 'Co-worker' : 'Customer'
+              const icon = p?.sentiment === 'gain' ? '\ud83d\udfe2' : p?.sentiment === 'risk' ? '\ud83d\udfe0' : '\ud83d\udd34'
+              return `${icon}  ${persona}`
+            },
+            label: (ctx: { datasetIndex: number; dataIndex: number }) => {
+              const isCoworker = ctx.datasetIndex === (visible.has('customer') ? 1 : 0) && visible.has('coworker')
+              const src = isCoworker ? COWORKER_POINTS : points
+              return wrapText(src[ctx.dataIndex]?.text ?? '')
+            },
+            labelColor: () => ({ borderColor: 'transparent', backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 }),
           },
         },
         datalabels: { display: false },
       },
     }),
-    [points],
+    [points, visible],
   )
 
   return (
     <div>
       <h2 className="proposal-title">P11 — Emotion Curve with Phase Filters</h2>
       <p className="proposal-desc">
-        Same emotional journey as P1, but with stage headers as interactive filters. Click any phase to highlight its data points on the curve with a yellow background band, and reveal a detail panel showing that stage's moments, sentiment, NPS, conversion, effort, and linked backlog items. Ideal for deep-dive workshops: an Engineering Manager can focus on Choosing while a CRM team zooms in on Living — without switching views.
+        Overlays both the customer and co-worker journeys with interactive stage filters. Click any phase to highlight its moments on both curves with a yellow band and reveal a detail panel with moments, sentiment, KPIs, and linked backlog items. Use the pills to isolate each perspective. Feature toggles affect the customer curve only.
       </p>
 
       <div className="proposal-card">
-        {/* Clickable stage header buttons */}
+        {/* Stage filter buttons */}
         <div style={{ display: 'flex', gap: 6, padding: '0.9rem 1rem 0' }}>
           <button
             type="button"
@@ -204,10 +283,51 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
           })}
         </div>
 
+        {/* Curve toggle pills */}
+        <div style={{ display: 'flex', gap: 8, padding: '0.65rem 1rem 0', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#47607d', marginRight: 4 }}>Show:</span>
+          {CURVES.map((c) => {
+            const on = visible.has(c.id)
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => toggle(c.id)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '0.3rem 0.85rem',
+                  border: `2px solid ${c.color}`,
+                  borderRadius: 999,
+                  background: on ? c.color : '#fff',
+                  color: on ? '#fff' : c.color,
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {c.dash && (
+                  <svg width="18" height="4" style={{ display: 'block' }}>
+                    <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" strokeDasharray="5,3" />
+                  </svg>
+                )}
+                {!c.dash && (
+                  <svg width="18" height="4" style={{ display: 'block' }}>
+                    <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" />
+                  </svg>
+                )}
+                {c.label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* Contextual hint */}
         <div style={{ padding: '0.35rem 1rem 0', fontSize: '0.74rem', color: '#94a3b8', fontStyle: 'italic' }}>
           {activeStage
-            ? `${stagePoints.length} moment${stagePoints.length !== 1 ? 's' : ''} in ${activeStage} — click a stage or All to change`
+            ? `${totalStageMoments} moment${totalStageMoments !== 1 ? 's' : ''} in ${activeStage} — click a stage or All to change`
             : 'All stages shown — click a stage to filter'}
         </div>
 
@@ -222,7 +342,7 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
 
         {activeStage ? (
           <>
-            {/* Left: moments in active stage */}
+            {/* Left: moments for active stage, grouped by curve */}
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Moments in {activeStage}
@@ -232,24 +352,43 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
                   </span>
                 )}
               </div>
-              {stagePoints.length === 0 ? (
+
+              {totalStageMoments === 0 && (
                 <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>No mapped moments in this stage yet.</p>
-              ) : (
-                stagePoints.map((p) => (
-                  <div key={p.id} style={{ display: 'flex', gap: 8, padding: '0.45rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
-                    <div>
-                      <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{p.text}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, textTransform: 'capitalize' }}>
-                        {p.sentiment} · satisfaction {100 - p.y}%
+              )}
+
+              {custStagePts.length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Customer</div>
+                  {custStagePts.map((p) => (
+                    <div key={p.id} style={{ display: 'flex', gap: 8, padding: '0.4rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                      <div>
+                        <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{p.text}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, textTransform: 'capitalize' }}>{p.sentiment} · {100 - p.y}%</div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
+              )}
+
+              {cwStagePts.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e85d04', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Co-worker</div>
+                  {cwStagePts.map((p) => (
+                    <div key={p.id} style={{ display: 'flex', gap: 8, padding: '0.4rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                      <div>
+                        <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{p.text}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2, textTransform: 'capitalize' }}>{p.sentiment} · {100 - p.y}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Right: backlog + KPI mini-cards */}
+            {/* Right: KPI mini-cards + backlog */}
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {activeMetrics && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
@@ -286,15 +425,16 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
           </>
         ) : (
           <>
-            {/* Left: all moments grouped by stage */}
+            {/* Left: all moments grouped by stage, split by curve */}
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 10 }}>All Moments</div>
               {STAGES.map((s) => {
-                const stagePts = points.filter((p) => stageOfPoint(p) === s.name)
+                const custPts = visible.has('customer') ? points.filter((p) => stageOfPoint(p) === s.name) : []
+                const cwPts = visible.has('coworker') ? COWORKER_POINTS.filter((p) => stageOfPoint(p) === s.name) : []
+                if (custPts.length === 0 && cwPts.length === 0) return null
                 const sm = STAGE_METRICS.find((m) => m.stage === s.name)
-                if (stagePts.length === 0) return null
                 return (
-                  <div key={s.name} style={{ marginBottom: 10 }}>
+                  <div key={s.name} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.name}</span>
                       {sm && (
@@ -303,15 +443,34 @@ export function P11EmotionCurvePhases({ points }: ProposalProps) {
                         </span>
                       )}
                     </div>
-                    {stagePts.map((p) => (
-                      <div key={p.id} style={{ display: 'flex', gap: 7, padding: '0.35rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
-                        <span style={{ width: 9, height: 9, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
-                        <div>
-                          <div style={{ fontSize: '0.8rem', lineHeight: 1.4 }}>{p.text}</div>
-                          <div style={{ fontSize: '0.67rem', color: '#94a3b8', marginTop: 1, textTransform: 'capitalize' }}>{p.sentiment}</div>
-                        </div>
-                      </div>
-                    ))}
+                    {custPts.length > 0 && (
+                      <>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 2, opacity: 0.7 }}>Customer</div>
+                        {custPts.map((p) => (
+                          <div key={p.id} style={{ display: 'flex', gap: 7, padding: '0.3rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                            <span style={{ width: 9, height: 9, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                            <div>
+                              <div style={{ fontSize: '0.8rem', lineHeight: 1.4 }}>{p.text}</div>
+                              <div style={{ fontSize: '0.67rem', color: '#94a3b8', marginTop: 1, textTransform: 'capitalize' }}>{p.sentiment}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    {cwPts.length > 0 && (
+                      <>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#e85d04', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 2, marginTop: custPts.length > 0 ? 6 : 0, opacity: 0.85 }}>Co-worker</div>
+                        {cwPts.map((p) => (
+                          <div key={p.id} style={{ display: 'flex', gap: 7, padding: '0.3rem 0', borderBottom: '1px solid #f0f4f8', alignItems: 'flex-start' }}>
+                            <span style={{ width: 9, height: 9, borderRadius: 999, background: pointColor(p.sentiment), flexShrink: 0, marginTop: 4 }} />
+                            <div>
+                              <div style={{ fontSize: '0.8rem', lineHeight: 1.4 }}>{p.text}</div>
+                              <div style={{ fontSize: '0.67rem', color: '#94a3b8', marginTop: 1, textTransform: 'capitalize' }}>{p.sentiment}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 )
               })}

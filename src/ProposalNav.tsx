@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { BASE_POINTS, FEATURES, type FeatureDefinition, type JourneyPoint } from './data/journeyData.ts'
 import { P2SwimlaneMap } from './proposals/P2SwimlaneMap.tsx'
-import { P3HorizonOverlay } from './proposals/P3HorizonOverlay.tsx'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
 import { P7PersonaOverlay } from './proposals/P7PersonaOverlay.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
@@ -13,7 +12,6 @@ import { Others } from './proposals/Others.tsx'
 
 const PROPOSALS = [
   { id: 2, label: 'P2 · Swimlane Map', component: P2SwimlaneMap },
-  { id: 3, label: 'P3 · Horizon Overlay', component: P3HorizonOverlay },
   { id: 5, label: 'P5 · Service Blueprint', component: P5ServiceBlueprint },
   { id: 7, label: 'P7 · Persona Overlay', component: P7PersonaOverlay },
   { id: 8, label: 'P8 · Role Dashboard', component: P8RoleDashboard },
