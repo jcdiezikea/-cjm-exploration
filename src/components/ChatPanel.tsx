@@ -271,18 +271,24 @@ async function askGemini(history: { role: 'user' | 'bot'; text: string }[], key:
   const contents: GeminiContent[] = history
     .slice(1).slice(-12)
     .map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }))
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
-        contents,
-        generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
-      }),
-    },
-  )
+
+  // API key (AIzaSy…) → query param; anything else → OAuth Bearer header
+  const isApiKey = key.startsWith('AIzaSy')
+  const url = isApiKey
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (!isApiKey) headers['Authorization'] = `Bearer ${key}`
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+      contents,
+      generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+    }),
+  })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}) as Record<string, unknown>) as { error?: { message?: string } }
     throw new Error(err?.error?.message ?? `HTTP ${res.status}`)
