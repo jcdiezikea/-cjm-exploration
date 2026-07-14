@@ -244,6 +244,55 @@ function answer(question: string): string {
 
 
 
+// ── Gemini integration ────────────────────────────────────────────────────────
+function buildSystemPrompt(): string {
+  const actLines = ALL_ACTIVITIES.map((a) =>
+    `${a.id}|${a.title}|stage:${cjmOf(a)}|effort:${a.effort}|impact:${a.impact}|priority:${a.priority}|objective:${a.objectiveName}|tags:${a.tags.join(',')}`
+  ).join('\n')
+  const metricLines = STAGE_METRICS.map((m) =>
+    `${m.stage}: NPS=${m.nps}, conv=${m.conversion}%, dropOff=${m.dropOff}%, effort=${m.effort}/10`
+  ).join('\n')
+  const backlogLines = BACKLOG_ITEMS.map((b) =>
+    `[${b.horizon}] ${b.stage} — ${b.title} (${b.storyPoints}sp)`
+  ).join('\n')
+  const featureLines = FEATURES.map((f) => `${f.name}: ${f.description}`).join('\n')
+  return `You are an AI assistant embedded in an IKEA FY27 Home Planning CJM visualisation tool.
+Answer questions about the data concisely. Use **bold** for emphasis. Keep answers under 300 words.
+Stages: ${CJM_STAGES.join(' → ')}
+Stage metrics:\n${metricLines}
+Activities (${ALL_ACTIVITIES.length}):\n${actLines}
+Backlog (${BACKLOG_ITEMS.length}):\n${backlogLines}
+Features:\n${featureLines}`
+}
+
+type GeminiContent = { role: string; parts: { text: string }[] }
+
+async function askGemini(history: { role: 'user' | 'bot'; text: string }[], key: string): Promise<string> {
+  const contents: GeminiContent[] = history
+    .slice(1).slice(-12)
+    .map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }))
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+        contents,
+        generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+      }),
+    },
+  )
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}) as Record<string, unknown>) as { error?: { message?: string } }
+    throw new Error(err?.error?.message ?? `HTTP ${res.status}`)
+  }
+  const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('Empty response from Gemini')
+  return text
+}
+
 // ── Suggested prompts ─────────────────────────────────────────────────────────
 const SUGGESTIONS = [
   'Executive summary',
@@ -261,6 +310,7 @@ type Msg = { role: 'user' | 'bot'; text: string }
 
 export function ChatPanel() {
   const [open, setOpen] = useState(false)
+  const [apiKey] = useState<string>(() => localStorage.getItem('gemini-api-key') ?? '')
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'bot',
@@ -268,17 +318,33 @@ export function ChatPanel() {
     },
   ])
   const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  function send(text: string) {
+  async function send(text: string) {
     const t = text.trim()
-    if (!t) return
-    setMessages((prev) => [...prev, { role: 'user', text: t }, { role: 'bot', text: answer(t) }])
+    if (!t || isLoading) return
+    const newMessages: Msg[] = [...messages, { role: 'user', text: t }]
+    setMessages(newMessages)
     setInput('')
+    if (apiKey) {
+      setIsLoading(true)
+      try {
+        const reply = await askGemini(newMessages, apiKey)
+        setMessages([...newMessages, { role: 'bot', text: reply }])
+      } catch (e) {
+        const fallback = `⚠️ **Gemini error:** ${(e as Error).message}\n\nFalling back:\n\n${answer(t)}`
+        setMessages([...newMessages, { role: 'bot', text: fallback }])
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      setMessages([...newMessages, { role: 'bot', text: answer(t) }])
+    }
   }
 
   const isFirstMessage = messages.length === 1
@@ -327,7 +393,9 @@ export function ChatPanel() {
         {/* Header */}
         <div style={{ background: '#111', color: '#fff', padding: '0.7rem 1rem', flexShrink: 0 }}>
           <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>💬 Ask the data</div>
-          <div style={{ fontSize: '0.62rem', color: '#888', marginTop: 1 }}>FY27 Home Planning · rule-based · no API key needed</div>
+          <div style={{ fontSize: '0.62rem', color: apiKey ? '#4ade80' : '#888', marginTop: 1 }}>
+            {apiKey ? 'FY27 Home Planning · Gemini AI active' : 'FY27 Home Planning · rule-based'}
+          </div>
         </div>
 
         {/* Messages */}
@@ -349,8 +417,13 @@ export function ChatPanel() {
           ))}
           <div ref={endRef} />
         </div>
-
-        {/* Suggestion chips */}
+        {isLoading && (
+          <div style={{ padding: '0 0.75rem 0.4rem', display: 'flex' }}>
+            <div style={{ padding: '0.45rem 0.8rem', borderRadius: '14px 14px 14px 3px', background: '#f0f4f8', fontSize: '0.72rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+              Thinking…
+            </div>
+          </div>
+        )}
         {isFirstMessage && (
           <div style={{ padding: '0 0.75rem 0.6rem', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {SUGGESTIONS.map((s) => (
@@ -381,22 +454,24 @@ export function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Ask about stages, activities, backlog…"
+            disabled={isLoading}
             style={{
               flex: 1, border: '1px solid var(--line)', borderRadius: 8,
               padding: '0.45rem 0.7rem', fontSize: '0.72rem',
               background: '#f8fafc', outline: 'none',
               fontFamily: 'inherit',
+              opacity: isLoading ? 0.5 : 1,
             }}
           />
           <button
             onClick={() => send(input)}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isLoading}
             style={{
               background: '#1c4f8f', color: '#fff',
               border: 'none', borderRadius: 8,
               padding: '0 0.85rem', fontSize: '0.9rem',
-              cursor: input.trim() ? 'pointer' : 'default',
-              opacity: input.trim() ? 1 : 0.35,
+              cursor: (input.trim() && !isLoading) ? 'pointer' : 'default',
+              opacity: (input.trim() && !isLoading) ? 1 : 0.35,
               transition: 'opacity 0.15s',
             }}
           >
