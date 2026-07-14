@@ -272,7 +272,7 @@ async function askGemini(history: { role: 'user' | 'bot'; text: string }[], key:
     .slice(1).slice(-12)
     .map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }))
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(key)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
