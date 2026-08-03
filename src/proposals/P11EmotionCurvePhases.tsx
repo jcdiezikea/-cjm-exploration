@@ -357,6 +357,26 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
         </div>
       </div>
 
+      <div style={{ marginTop: '1.25rem' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#47607d', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Biggest experience gaps between customer and co-worker</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {divergences.slice(0, 4).map((d) => {
+            const customerBetter = d.cwAvg > d.custAvg
+            return (
+              <div key={d.stage} style={{ flex: '1 1 160px', background: '#f7f9fb', borderRadius: 10, padding: '0.6rem 0.75rem', borderLeft: `3px solid ${d.diff > 15 ? '#d2001f' : d.diff > 8 ? '#ed6f2c' : '#149238'}` }}>
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>{d.stage}</div>
+                <div style={{ fontSize: '0.75rem', color: '#47607d' }}>Gap: <strong>{d.diff} pts</strong></div>
+                <div style={{ fontSize: '0.72rem', color: '#888', marginTop: 3 }}>
+                  {customerBetter
+                    ? 'Co-worker friction is higher — tooling may be holding them back'
+                    : 'Customer friction is higher — service experience needs more support'}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Detail panel — always visible */}
       <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
 
@@ -519,26 +539,6 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
             </div>
           </>
         )}
-      </div>
-
-      <div style={{ marginTop: '1.25rem' }}>
-        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#47607d', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Biggest experience gaps between customer and co-worker</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {divergences.slice(0, 4).map((d) => {
-            const customerBetter = d.cwAvg > d.custAvg
-            return (
-              <div key={d.stage} style={{ flex: '1 1 160px', background: '#f7f9fb', borderRadius: 10, padding: '0.6rem 0.75rem', borderLeft: `3px solid ${d.diff > 15 ? '#d2001f' : d.diff > 8 ? '#ed6f2c' : '#149238'}` }}>
-                <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>{d.stage}</div>
-                <div style={{ fontSize: '0.75rem', color: '#47607d' }}>Gap: <strong>{d.diff} pts</strong></div>
-                <div style={{ fontSize: '0.72rem', color: '#888', marginTop: 3 }}>
-                  {customerBetter
-                    ? 'Co-worker friction is higher — tooling may be holding them back'
-                    : 'Customer friction is higher — service experience needs more support'}
-                </div>
-              </div>
-            )
-          })}
-        </div>
       </div>
     </div>
   )
