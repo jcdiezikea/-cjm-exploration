@@ -416,6 +416,9 @@
   overflow: auto;
 }
 
+.s-reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.45s ease, transform 0.45s ease; }
+.s-reveal.s-visible { opacity: 1; transform: none; }
+
 .proposal-title {
   margin: 0 0 0.5rem;
   font-size: 1.05rem;

@@ -5,6 +5,7 @@ import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
 import { P7PersonaOverlay } from './proposals/P7PersonaOverlay.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
 import { P9StoryMap } from './proposals/P9StoryMap.tsx'
+import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
 import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
 import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
@@ -22,7 +23,8 @@ const PROPOSALS = [
   { id: 6, label: 'P6 · Heatmap', component: P10Heatmap },
   { id: 7, label: 'P7 · Phase Filters', component: P11EmotionCurvePhases },
   { id: 8, label: 'P8 · Customer & Co-worker', component: P12CoworkerOverlay },
-  { id: 9, label: 'Others', component: Others },
+  { id: 9, label: 'P9 · Story', component: P13ScrollStory },
+  { id: 10, label: 'Others', component: Others },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
