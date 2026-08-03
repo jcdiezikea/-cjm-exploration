@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { STAGES, POWER_USER_POINTS, STAGE_METRICS, pointColor } from '../data/journeyData.ts'
+import { STAGES, POWER_USER_POINTS, COWORKER_POINTS, pointColor } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
 function wrapText(text: string, maxLen = 52): string[] {
@@ -131,6 +131,16 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
     },
   }
 
+  const divergences = STAGES.map((s, si) => {
+    const start = (si / STAGES.length) * 100
+    const end = ((si + 1) / STAGES.length) * 100
+    const custPts = points.filter((p) => p.x >= start && p.x < end)
+    const cwPts = COWORKER_POINTS.filter((p) => p.x >= start && p.x < end)
+    const custAvg = custPts.length ? custPts.reduce((a, p) => a + p.y, 0) / custPts.length : 50
+    const cwAvg = cwPts.length ? cwPts.reduce((a, p) => a + p.y, 0) / cwPts.length : 50
+    return { stage: s.name, diff: Math.round(Math.abs(custAvg - cwAvg)), custAvg, cwAvg }
+  }).sort((a, b) => b.diff - a.diff)
+
   return (
     <div>
       <h2 className="proposal-title">P7 — Multi-Persona Overlay</h2>
@@ -152,29 +162,18 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
       </div>
 
       <div style={{ marginTop: '1.25rem' }}>
-        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#47607d', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Experience gap by stage</div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {STAGE_METRICS.map((m) => {
-            const gap = m.dropOff - Math.max(0, m.nps)
-            const severity = gap > 60 ? 'high' : gap > 30 ? 'mid' : 'low'
-            const borderColor = severity === 'high' ? '#d2001f' : severity === 'mid' ? '#ed6f2c' : '#c8d6e8'
-            const labelColor = severity === 'high' ? '#d2001f' : severity === 'mid' ? '#ed6f2c' : '#149238'
+        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#47607d', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Biggest experience gaps between customer and co-worker</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {divergences.slice(0, 4).map((d) => {
+            const customerBetter = d.cwAvg > d.custAvg
             return (
-              <div key={m.stage} style={{ flex: '1 1 110px', background: '#fff', border: `1.5px solid ${borderColor}`, borderRadius: 10, padding: '0.65rem 0.75rem' }}>
-                <div style={{ fontWeight: 700, fontSize: '0.76rem', marginBottom: 5 }}>{m.stage}</div>
-                <div style={{ fontSize: '0.68rem', color: '#47607d', display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span>NPS</span>
-                  <b style={{ color: m.nps < 0 ? '#d2001f' : '#149238' }}>{m.nps > 0 ? '+' : ''}{m.nps}</b>
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#47607d', display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span>Drop-off</span>
-                  <b>{m.dropOff}%</b>
-                </div>
-                <div style={{ height: 4, background: '#e2e8f0', borderRadius: 999, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.min(100, gap)}%`, background: borderColor, borderRadius: 999 }} />
-                </div>
-                <div style={{ fontSize: '0.62rem', color: labelColor, fontWeight: 700, marginTop: 3, textTransform: 'uppercase' }}>
-                  {severity === 'high' ? 'Large gap' : severity === 'mid' ? 'Mid gap' : 'Small gap'}
+              <div key={d.stage} style={{ flex: '1 1 160px', background: '#f7f9fb', borderRadius: 10, padding: '0.6rem 0.75rem', borderLeft: `3px solid ${d.diff > 15 ? '#d2001f' : d.diff > 8 ? '#ed6f2c' : '#149238'}` }}>
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>{d.stage}</div>
+                <div style={{ fontSize: '0.75rem', color: '#47607d' }}>Gap: <strong>{d.diff} pts</strong></div>
+                <div style={{ fontSize: '0.72rem', color: '#888', marginTop: 3 }}>
+                  {customerBetter
+                    ? 'Co-worker friction is higher — tooling may be holding them back'
+                    : 'Customer friction is higher — service experience needs more support'}
                 </div>
               </div>
             )
