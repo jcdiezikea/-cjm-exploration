@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { JSONBIN_KEY, JSONBIN_COLLECTION } from './surveyConfig.ts'
 
 const ROLES   = ['Business stakeholder', 'Design', 'Engineering', 'Roadmap & Planning', 'Other']
@@ -88,9 +88,23 @@ function Chips({ options, selected, onToggle, max }: {
   )
 }
 
+const DRAFT_KEY = 'survey_draft'
+
+function loadDraft(): Form {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY
+  } catch {
+    return EMPTY
+  }
+}
+
 export function SurveyForm() {
-  const [form, setForm]     = useState<Form>(EMPTY)
+  const [form, setForm]     = useState<Form>(loadDraft)
   const [status, setStatus] = useState<'idle' | 'busy' | 'done' | 'err'>('idle')
+
+  // persist draft on every change
+  useEffect(() => { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)) }, [form])
 
   function set<K extends keyof Form>(k: K, v: Form[K]) {
     setForm(p => ({ ...p, [k]: v }))
@@ -121,6 +135,7 @@ export function SurveyForm() {
         body: JSON.stringify({ ...form, submittedAt: new Date().toISOString() }),
       })
       if (!res.ok) throw new Error()
+      localStorage.removeItem(DRAFT_KEY)
       setStatus('done')
     } catch {
       setStatus('err')
