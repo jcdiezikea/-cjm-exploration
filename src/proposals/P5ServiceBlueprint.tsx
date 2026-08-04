@@ -38,14 +38,14 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
   })
 
   const CX_ROWS = [
-    { key: 'action',  label: '👤 Customer action',  bg: '#f0f7ff' },
-    { key: 'thought', label: '💭 Thought / feeling', bg: '#f7f0ff' },
-    { key: 'channel', label: '📱 Channel',           bg: '#f0fff4' },
+    { key: 'action',  label: '👤 Action',  bg: '#f0f7ff' },
+    { key: 'thought', label: '💭 Thought',  bg: '#f7f0ff' },
+    { key: 'channel', label: '📱 Channel',  bg: '#f0fff4' },
   ] as const
   const BS_ROWS = [
-    { key: 'team',    label: '🏢 Team responsible', bg: '#fafbfc' },
-    { key: 'system',  label: '⚙️ System / tool',    bg: '#f5f7fa' },
-    { key: 'process', label: '🔄 Process',           bg: '#fafbfc' },
+    { key: 'team',    label: '🏢 Team',    bg: '#fafbfc' },
+    { key: 'system',  label: '⚙️ System',  bg: '#f5f7fa' },
+    { key: 'process', label: '🔄 Process', bg: '#fafbfc' },
   ] as const
 
   function Pill({ rowKey, label }: { rowKey: string; label: string }) {
