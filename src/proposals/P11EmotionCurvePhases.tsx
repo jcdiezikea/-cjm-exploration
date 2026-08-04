@@ -76,8 +76,7 @@ function wrapText(text: string, maxLen = 52): string[] {
 export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [visible, setVisible]         = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
-  const [custHorizons, setCustHorizons] = useState<Set<string>>(new Set())
-  const [cwHorizons, setCwHorizons]     = useState<Set<string>>(new Set())
+  const [cwHorizons, setCwHorizons]   = useState<Set<string>>(new Set())
 
   function toggle(id: CurveId) {
     setVisible((cur) => {
@@ -136,16 +135,12 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
         borderColor: '#1c4f8f',
         borderWidth: 2.5,
         pointRadius: points.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
-        pointBackgroundColor: points.map((p) => {
-          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
-          const horizonOk = custHorizons.size === 0 || [...custHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
-          return stageOk && horizonOk ? pointColor(p.sentiment) : '#d1d5db'
-        }),
-        pointBorderColor: points.map((p) => {
-          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
-          const horizonOk = custHorizons.size === 0 || [...custHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
-          return stageOk && horizonOk ? '#fff' : '#d1d5db'
-        }),
+        pointBackgroundColor: points.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
+        ),
+        pointBorderColor: points.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
+        ),
         pointBorderWidth: 2,
         fill: false,
       })
@@ -324,12 +319,10 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
           })}
         </div>
 
-        {/* Curve toggles with per-curve T1/T2/T3 horizon filters */}
+        {/* Curve toggles — Customer pill, then Co-worker pill with T1/T2/T3 horizon filters */}
         <div style={{ display: 'flex', gap: 14, padding: '0.65rem 1rem 0', alignItems: 'center', flexWrap: 'wrap' }}>
           {CURVES.map((c) => {
-            const on       = visible.has(c.id)
-            const horizons = c.id === 'customer' ? custHorizons : cwHorizons
-            const setter   = c.id === 'customer' ? setCustHorizons : setCwHorizons
+            const on = visible.has(c.id)
             return (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <button
@@ -353,15 +346,16 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
                   )}
                   {c.label}
                 </button>
-                {(['T1', 'T2', 'T3'] as const).map(h => {
-                  const active = horizons.has(h)
+                {/* T1/T2/T3 only on the co-worker (dotted) curve */}
+                {c.id === 'coworker' && (['T1', 'T2', 'T3'] as const).map(h => {
+                  const active = cwHorizons.has(h)
                   const bg  = h === 'T1' ? '#e6f4ea' : h === 'T2' ? '#fff3e8' : '#f0f4f8'
                   const col = h === 'T1' ? '#149238' : h === 'T2' ? '#ed6f2c' : '#64748b'
                   return (
                     <button
                       key={h}
                       type="button"
-                      onClick={() => toggleHorizon(setter, h)}
+                      onClick={() => toggleHorizon(setCwHorizons, h)}
                       style={{
                         padding: '2px 9px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700,
                         border: `1.5px solid ${active ? col : '#e2e8f0'}`,
@@ -481,7 +475,7 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 6 }}>Backlog</div>
                 {(() => {
-                  const activeH = new Set([...custHorizons, ...cwHorizons])
+                  const activeH = new Set([...cwHorizons])
                   const shown = activeH.size > 0 ? stageBacklog.filter(b => activeH.has(b.horizon)) : stageBacklog
                   return shown.length === 0 ? (
                     <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>No backlog items for this stage.</p>
