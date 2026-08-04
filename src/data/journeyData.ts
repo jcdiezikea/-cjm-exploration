@@ -145,7 +145,9 @@ export const BACKLOG_ITEMS: BacklogItem[] = TASK_ITEMS.map((t) => ({
   title:       t.title,
   stage:       t.stage,
   priority:    t.status === 'roadmap' ? 'must-have' : t.status === 'risk' ? 'like-to-have' : 'nice-to-have',
-  horizon:     (t.status === 'roadmap' || t.status === 'done') ? 'T1' : t.status === 'risk' ? 'T3' : 'T2',
+  horizon:     (t.status === 'roadmap' || t.status === 'done') ? 'T1'
+              : (t.status === 'pending' && t.group === 'IBD-754') ? 'T3'
+              : 'T2',
   team:        t.source,
   storyPoints: t.linkedCards.length * 3 + 2,
 } as BacklogItem))

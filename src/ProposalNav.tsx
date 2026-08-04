@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { BASE_POINTS, FEATURES, type FeatureDefinition, type JourneyPoint } from './data/journeyData.ts'
+import { useState } from 'react'
+import { BASE_POINTS } from './data/journeyData.ts'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
 import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
@@ -21,37 +21,9 @@ const PROPOSALS = [
   { id: 7, label: '📋 Survey', component: Survey },
 ]
 
-function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
-  const pts = base.map((p) => ({ ...p }))
-  for (const f of activeFeatures) {
-    for (const [id, change] of Object.entries(f.pointChanges)) {
-      const idx = pts.findIndex((p) => p.id === id)
-      if (idx >= 0) pts[idx] = { ...pts[idx], ...change }
-    }
-  }
-  return pts
-}
-
 export function ProposalNav() {
   const [active, setActive] = useState(1)
-  const [activeFeatureIds, setActiveFeatureIds] = useState<string[]>([])
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
-
-  function toggleFeature(id: string) {
-    setActiveFeatureIds((cur) =>
-      cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
-    )
-  }
-
-  const activeFeatures = useMemo(
-    () => FEATURES.filter((f) => activeFeatureIds.includes(f.id)),
-    [activeFeatureIds],
-  )
-
-  const journeyPoints = useMemo(
-    () => applyFeatures(BASE_POINTS, activeFeatures),
-    [activeFeatures],
-  )
 
   const CurrentProposal = PROPOSALS.find((p) => p.id === active)!.component
 
@@ -70,26 +42,12 @@ export function ProposalNav() {
         ))}
       </nav>
 
-      <div className="feature-bar">
-        <span className="feature-bar-label">Features:</span>
-        {FEATURES.map((f) => (
-          <label key={f.id} className={`feature-chip ${activeFeatureIds.includes(f.id) ? 'on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={activeFeatureIds.includes(f.id)}
-              onChange={() => toggleFeature(f.id)}
-            />
-            {f.name}
-          </label>
-        ))}
-      </div>
-
       <InsightStrip />
 
       <div className="proposal-body">
         <CurrentProposal
-          points={journeyPoints}
-          activeFeatureIds={activeFeatureIds}
+          points={BASE_POINTS}
+          activeFeatureIds={[]}
           onStageClick={setSelectedStage}
         />
       </div>
