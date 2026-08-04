@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { BASE_POINTS, FEATURES, type FeatureDefinition, type JourneyPoint } from './data/journeyData.ts'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
-import { P9StoryMap } from './proposals/P9StoryMap.tsx'
 import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
 import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
@@ -14,11 +13,10 @@ import { ChatPanel } from './components/ChatPanel.tsx'
 const PROPOSALS = [
   { id: 1, label: 'P1 · Service Blueprint', component: P5ServiceBlueprint },
   { id: 2, label: 'P2 · Role Dashboard', component: P8RoleDashboard },
-  { id: 3, label: 'P3 · Story Map', component: P9StoryMap },
-  { id: 4, label: 'P4 · Heatmap', component: P10Heatmap },
-  { id: 5, label: 'P5 · Phase Filters', component: P11EmotionCurvePhases },
-  { id: 6, label: 'P6 · Story', component: P13ScrollStory },
-  { id: 7, label: 'Others', component: Others },
+  { id: 3, label: 'P3 · Heatmap', component: P10Heatmap },
+  { id: 4, label: 'P4 · Phase Filters', component: P11EmotionCurvePhases },
+  { id: 5, label: 'P5 · Story', component: P13ScrollStory },
+  { id: 6, label: 'Others', component: Others },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
