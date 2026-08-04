@@ -1,30 +1,24 @@
 import { useMemo, useState } from 'react'
 import { BASE_POINTS, FEATURES, type FeatureDefinition, type JourneyPoint } from './data/journeyData.ts'
-import { P2SwimlaneMap } from './proposals/P2SwimlaneMap.tsx'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
-import { P7PersonaOverlay } from './proposals/P7PersonaOverlay.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
 import { P9StoryMap } from './proposals/P9StoryMap.tsx'
 import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
 import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
-import { P12CoworkerOverlay } from './proposals/P12CoworkerOverlay.tsx'
 import { Others } from './proposals/Others.tsx'
 import { InsightStrip } from './components/InsightStrip.tsx'
 import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
 
 const PROPOSALS = [
-  { id: 1, label: 'P1 · Swimlane Map', component: P2SwimlaneMap },
-  { id: 2, label: 'P2 · Service Blueprint', component: P5ServiceBlueprint },
-  { id: 3, label: 'P3 · Persona Overlay', component: P7PersonaOverlay },
-  { id: 4, label: 'P4 · Role Dashboard', component: P8RoleDashboard },
-  { id: 5, label: 'P5 · Story Map', component: P9StoryMap },
-  { id: 6, label: 'P6 · Heatmap', component: P10Heatmap },
-  { id: 7, label: 'P7 · Phase Filters', component: P11EmotionCurvePhases },
-  { id: 8, label: 'P8 · Customer & Co-worker', component: P12CoworkerOverlay },
-  { id: 9, label: 'P9 · Story', component: P13ScrollStory },
-  { id: 10, label: 'Others', component: Others },
+  { id: 1, label: 'P2 · Service Blueprint', component: P5ServiceBlueprint },
+  { id: 2, label: 'P4 · Role Dashboard', component: P8RoleDashboard },
+  { id: 3, label: 'P5 · Story Map', component: P9StoryMap },
+  { id: 4, label: 'P6 · Heatmap', component: P10Heatmap },
+  { id: 5, label: 'P7 · Phase Filters', component: P11EmotionCurvePhases },
+  { id: 6, label: 'P9 · Story', component: P13ScrollStory },
+  { id: 7, label: 'Others', component: Others },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
