@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  CJM_STAGES, STAGES, STAGE_METRICS, BACKLOG_ITEMS, cjmOf,
+  CJM_STAGES, STAGE_METRICS, BACKLOG_ITEMS, cjmOf,
   type BacklogItem,
 } from '../data/journeyData.ts'
 import { ALL_ACTIVITIES, type RoadmapActivity } from '../data/roadmapData.ts'
