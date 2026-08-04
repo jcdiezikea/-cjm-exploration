@@ -232,6 +232,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
         const acts   = ALL_ACTIVITIES.filter(a => cjmOf(a) === stageName)
         const bl     = BACKLOG_ITEMS.filter(b => b.stage === stageName)
         const color  = STAGE_COLORS[stageName]
+        const chapterDim = stageF && stageF !== stageName
         return (
           <div
             key={stageName}
@@ -241,6 +242,8 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
               borderRadius: 20, border: '1px solid #e2e8f0',
               padding: '2rem 2rem 1.5rem', marginBottom: '1.5rem',
               position: 'relative', overflow: 'hidden',
+              opacity: chapterDim ? 0.35 : 1,
+              transition: 'opacity 0.25s',
             }}
           >
             <div style={{ position: 'absolute', right: 14, top: 4, fontSize: '8rem', fontWeight: 900, color: 'rgba(0,0,0,0.04)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}>
@@ -272,7 +275,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
                     background: '#fff', borderRadius: 10,
                     border: `1.5px solid ${color}28`,
                     padding: '0.65rem 0.75rem',
-                    opacity: actVisible(a) ? 1 : 0.18,
+                    opacity: actVisible(a) ? 1 : 0.35,
                     transition: 'opacity 0.25s',
                     boxShadow: actVisible(a) ? '0 1px 4px rgba(0,0,0,0.05)' : 'none',
                   }}
@@ -307,7 +310,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
                           background: HORIZON_BG[h], color: HORIZON_COLOR[h],
                           border: `1px solid ${HORIZON_COLOR[h]}33`,
                           fontSize: '0.67rem',
-                          opacity: blVisible(b) ? 1 : 0.18,
+                          opacity: blVisible(b) ? 1 : 0.35,
                           transition: 'opacity 0.25s',
                         }}
                       >
