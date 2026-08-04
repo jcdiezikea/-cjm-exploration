@@ -455,6 +455,130 @@ div:has(> .proposal-desc) > .proposal-desc {
   border-radius: 0 8px 8px 0;
 }
 
+/* ── Intro landing page ──────────────────────────────────────── */
+.intro-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  display: grid;
+  gap: 3rem;
+}
+
+.intro-hero {
+  display: grid;
+  gap: 1rem;
+}
+
+.intro-kicker {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1c4f8f;
+}
+
+.intro-heading {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.08;
+  color: #111;
+}
+
+.intro-sub {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #47607d;
+  line-height: 1.7;
+  max-width: 680px;
+}
+
+.intro-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.intro-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.intro-card p {
+  margin: 0.25rem 0 0;
+  font-size: 0.87rem;
+  color: #47607d;
+  line-height: 1.55;
+}
+
+.intro-card-num {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  background: #ffc800;
+  color: #111;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+.intro-steps {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.intro-steps-heading {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.intro-step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.intro-step-list li {
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+}
+
+.intro-step-list li p {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  color: #47607d;
+  line-height: 1.6;
+}
+
+.intro-step-badge {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  background: #111;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
+}
+
 .proposal-card {
   background: #fff;
   border-radius: 16px;

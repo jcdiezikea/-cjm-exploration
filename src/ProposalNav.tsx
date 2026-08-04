@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BASE_POINTS } from './data/journeyData.ts'
+import { Intro } from './proposals/Intro.tsx'
 import { P5ServiceBlueprint } from './proposals/P5ServiceBlueprint.tsx'
 import { P8RoleDashboard } from './proposals/P8RoleDashboard.tsx'
 import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
@@ -12,6 +13,7 @@ import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
 
 const PROPOSALS = [
+  { id: 0, label: '🏠 Intro', component: Intro },
   { id: 1, label: 'P1 · Service Blueprint', component: P5ServiceBlueprint },
   { id: 2, label: 'P2 · Role Dashboard', component: P8RoleDashboard },
   { id: 3, label: 'P3 · Heatmap', component: P10Heatmap },
@@ -22,7 +24,7 @@ const PROPOSALS = [
 ]
 
 export function ProposalNav() {
-  const [active, setActive] = useState(1)
+  const [active, setActive] = useState(0)
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
 
   const CurrentProposal = PROPOSALS.find((p) => p.id === active)!.component
