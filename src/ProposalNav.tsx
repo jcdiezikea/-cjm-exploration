@@ -13,7 +13,6 @@ import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
 
 const PROPOSALS = [
-  { id: 0, label: '🏠 Intro', component: Intro },
   { id: 1, label: 'P1 · Service Blueprint', component: P5ServiceBlueprint },
   { id: 2, label: 'P2 · Role Dashboard', component: P8RoleDashboard },
   { id: 3, label: 'P3 · Heatmap', component: P10Heatmap },
@@ -24,8 +23,13 @@ const PROPOSALS = [
 ]
 
 export function ProposalNav() {
-  const [active, setActive] = useState(0)
+  const [started, setStarted] = useState(false)
+  const [active, setActive] = useState(1)
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
+
+  if (!started) {
+    return <Intro onStart={() => setStarted(true)} />
+  }
 
   const CurrentProposal = PROPOSALS.find((p) => p.id === active)!.component
 

@@ -1,4 +1,4 @@
-export function Intro() {
+export function Intro({ onStart }: { onStart: () => void }) {
   return (
     <div className="intro-page">
       <div className="intro-hero">
@@ -69,6 +69,12 @@ export function Intro() {
             </div>
           </li>
         </ol>
+      </div>
+
+      <div className="intro-cta">
+        <button type="button" className="intro-cta-btn" onClick={onStart}>
+          Start exploring →
+        </button>
       </div>
     </div>
   )
