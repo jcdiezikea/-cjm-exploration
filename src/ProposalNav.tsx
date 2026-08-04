@@ -6,6 +6,7 @@ import { P13ScrollStory } from './proposals/P13ScrollStory.tsx'
 import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
 import { Others } from './proposals/Others.tsx'
+import { Survey } from './proposals/Survey.tsx'
 import { InsightStrip } from './components/InsightStrip.tsx'
 import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
@@ -17,6 +18,7 @@ const PROPOSALS = [
   { id: 4, label: 'P4 · Phase Filters', component: P11EmotionCurvePhases },
   { id: 5, label: 'P5 · Story', component: P13ScrollStory },
   { id: 6, label: 'Others', component: Others },
+  { id: 7, label: '📋 Survey', component: Survey },
 ]
 
 function applyFeatures(base: JourneyPoint[], activeFeatures: FeatureDefinition[]): JourneyPoint[] {
