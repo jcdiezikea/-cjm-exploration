@@ -143,7 +143,7 @@ export function P7PersonaOverlay({ points }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P7 — Multi-Persona Overlay</h2>
+      <h2 className="proposal-title">Persona Overlay</h2>
       <p className="proposal-desc">
         Overlays two distinct emotional curves on the same chart — a first-time buyer (solid blue) and a returning customer (dashed green) — revealing where the experience diverges most. Shared pain points are universally important; divergence zones highlight where targeted improvements for one segment could unlock loyalty in the other. Feature toggles affect the first-time buyer curve, letting you show live how a feature closes the gap.
       </p>

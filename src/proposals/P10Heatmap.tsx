@@ -38,7 +38,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P10 — Satisfaction Heatmap</h2>
+      <h2 className="proposal-title">P3 — Heatmap</h2>
       <p className="proposal-desc">
         Compresses all key metrics into a single colour-coded grid — green cells are healthy, red cells demand attention. The matrix makes cross-stage, cross-metric comparisons instantaneous: you can see at a glance that Choosing has both the worst NPS and the highest drop-off, or that Receiving is the only stage consistently in the green. Clicking any cell drills into the backlog items that address that stage, bridging insight directly to action.
       </p>

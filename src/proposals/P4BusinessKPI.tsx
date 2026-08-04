@@ -15,7 +15,7 @@ export function P4BusinessKPI({ points }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P4 — Business KPI Dashboard</h2>
+      <h2 className="proposal-title">Business KPI</h2>
       <p className="proposal-desc">
         Translates the CJM into the language of business: NPS, conversion rate, drop-off, and effort score per stage. Stage cards give executives a quick scan of where the funnel is leaking and where satisfaction is lowest. Clicking any stage drills into its backlog, showing the business case for each investment. Sentiment badges (gains / risks / pains) add a quick CX signal without overwhelming non-design audiences.
       </p>

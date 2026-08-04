@@ -132,7 +132,7 @@ export function P8RoleDashboard({ points }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P8 — Role-Filtered Dashboard</h2>
+      <h2 className="proposal-title">P2 — Role Dashboard</h2>
       <p className="proposal-desc">
         One dataset, four tailored views — each optimised for a different stakeholder. Business leaders see KPI cards and conversion metrics. Design teams get the emotion curve and pain-point highlights. Engineering sees the full backlog table with story points and team ownership. Roadmap leaders get T1/T2/T3 horizon groupings. This proposal makes the case for a single CJM tool that adapts its presentation to its audience rather than maintaining separate decks.
       </p>

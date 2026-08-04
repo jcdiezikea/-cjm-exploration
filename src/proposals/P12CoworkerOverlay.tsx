@@ -168,7 +168,7 @@ export function P12CoworkerOverlay({ points, onStageClick }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P12 — Customer & Co-worker Overlay</h2>
+      <h2 className="proposal-title">Customer & Co-worker</h2>
       <p className="proposal-desc">
         Overlays the emotional journey of the customer against the experience of the IKEA co-worker supporting them through the same stages. Where the curves diverge, there is a misalignment between what the customer feels and what the co-worker is able to deliver. Convergence zones reveal where tooling and processes are well-matched. Use the pills to isolate each perspective. Feature toggles affect the customer curve only.
       </p>

@@ -36,7 +36,7 @@ export function P6OpportunityMatrix(_props: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P6 — Opportunity Matrix</h2>
+      <h2 className="proposal-title">Opportunity Matrix</h2>
       <p className="proposal-desc">
         Prioritises pain points by plotting them against two dimensions: implementation effort (x-axis) and customer severity (y-axis). Bubble size reflects the number of affected users. The top-left quadrant — high severity, low effort — reveals your quick wins. The top-right quadrant surfaces strategic bets worth the investment. Best for Roadmap and Business leaders who need to justify where to focus next.
       </p>

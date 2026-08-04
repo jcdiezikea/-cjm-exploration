@@ -275,7 +275,7 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
 
   return (
     <div>
-      <h2 className="proposal-title">P11 — Emotion Curve with Phase Filters</h2>
+      <h2 className="proposal-title">P4 — Phase Filters</h2>
       <p className="proposal-desc">
         Overlays both the customer and co-worker journeys with interactive stage filters. Click any phase to highlight its moments on both curves with a yellow band and reveal a detail panel with moments, sentiment, KPIs, and linked backlog items. Use the pills to isolate each perspective. Feature toggles affect the customer curve only.
       </p>

@@ -66,7 +66,7 @@ const ROW_COLORS = ['#f0f7ff', '#f7f0ff', '#f0fff4', '#fff0f0', '#fafbfc', '#fff
 export function P2SwimlaneMap({ onStageClick }: ProposalProps) {
   return (
     <div>
-      <h2 className="proposal-title">P2 — Swimlane Journey Map</h2>
+      <h2 className="proposal-title">Swimlane Map</h2>
       <p className="proposal-desc">
         Organises the journey into horizontal layers (Actions, Thoughts, Channels, Pain Points, KPIs, Features) so every role can find their layer of interest instantly. Design teams see what customers think and feel; commerce teams see KPIs; product teams see which features are mapped to each stage. The NPS badge per stage header anchors each column in business reality.
       </p>
