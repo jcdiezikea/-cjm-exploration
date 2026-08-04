@@ -8,9 +8,9 @@ import { P12CoworkerOverlay } from './P12CoworkerOverlay.tsx'
 import type { ProposalProps } from './types.ts'
 
 const SUB = [
-  { id: 'p1', label: 'P1 · Swimlane Map', component: P2SwimlaneMap },
-  { id: 'p3', label: 'P3 · Persona Overlay', component: P7PersonaOverlay },
-  { id: 'p8', label: 'P8 · Customer & Co-worker', component: P12CoworkerOverlay },
+  { id: 'p1', label: 'Swimlane Map', component: P2SwimlaneMap },
+  { id: 'p3', label: 'Persona Overlay', component: P7PersonaOverlay },
+  { id: 'p8', label: 'Customer & Co-worker', component: P12CoworkerOverlay },
   { id: 'ec', label: 'Emotion Curve', component: P1EmotionCurve },
   { id: 'p4', label: 'Business KPI', component: P4BusinessKPI },
   { id: 'p6', label: 'Opportunity Matrix', component: P6OpportunityMatrix },

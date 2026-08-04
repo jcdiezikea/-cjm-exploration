@@ -12,12 +12,12 @@ import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
 
 const PROPOSALS = [
-  { id: 1, label: 'P2 · Service Blueprint', component: P5ServiceBlueprint },
-  { id: 2, label: 'P4 · Role Dashboard', component: P8RoleDashboard },
-  { id: 3, label: 'P5 · Story Map', component: P9StoryMap },
-  { id: 4, label: 'P6 · Heatmap', component: P10Heatmap },
-  { id: 5, label: 'P7 · Phase Filters', component: P11EmotionCurvePhases },
-  { id: 6, label: 'P9 · Story', component: P13ScrollStory },
+  { id: 1, label: 'P1 · Service Blueprint', component: P5ServiceBlueprint },
+  { id: 2, label: 'P2 · Role Dashboard', component: P8RoleDashboard },
+  { id: 3, label: 'P3 · Story Map', component: P9StoryMap },
+  { id: 4, label: 'P4 · Heatmap', component: P10Heatmap },
+  { id: 5, label: 'P5 · Phase Filters', component: P11EmotionCurvePhases },
+  { id: 6, label: 'P6 · Story', component: P13ScrollStory },
   { id: 7, label: 'Others', component: Others },
 ]
 
