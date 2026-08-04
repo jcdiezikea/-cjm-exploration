@@ -51,6 +51,13 @@ const CURVES: { id: CurveId; label: string; color: string; dash?: number[] }[] =
   { id: 'coworker', label: 'Co-worker', color: '#e85d04', dash: [7, 4] },
 ]
 
+// Pre-compute which horizons have backlog per stage (constant — BACKLOG_ITEMS never changes)
+const STAGE_HORIZONS: Record<string, Set<string>> = {}
+for (const item of BACKLOG_ITEMS) {
+  if (!STAGE_HORIZONS[item.stage]) STAGE_HORIZONS[item.stage] = new Set()
+  STAGE_HORIZONS[item.stage].add(item.horizon)
+}
+
 function wrapText(text: string, maxLen = 52): string[] {
   const words = text.split(' ')
   const lines: string[] = []
@@ -68,7 +75,9 @@ function wrapText(text: string, maxLen = 52): string[] {
 
 export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
   const [activeStage, setActiveStage] = useState<string | null>(null)
-  const [visible, setVisible] = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
+  const [visible, setVisible]         = useState<Set<CurveId>>(new Set(['customer', 'coworker']))
+  const [custHorizons, setCustHorizons] = useState<Set<string>>(new Set())
+  const [cwHorizons, setCwHorizons]     = useState<Set<string>>(new Set())
 
   function toggle(id: CurveId) {
     setVisible((cur) => {
@@ -80,6 +89,10 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
       }
       return next
     })
+  }
+
+  function toggleHorizon(setter: (fn: (prev: Set<string>) => Set<string>) => void, h: string) {
+    setter(prev => { const next = new Set(prev); next.has(h) ? next.delete(h) : next.add(h); return next })
   }
 
   const custStagePts = useMemo(
@@ -123,12 +136,16 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
         borderColor: '#1c4f8f',
         borderWidth: 2.5,
         pointRadius: points.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
-        pointBackgroundColor: points.map((p) =>
-          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
-        ),
-        pointBorderColor: points.map((p) =>
-          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
-        ),
+        pointBackgroundColor: points.map((p) => {
+          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
+          const horizonOk = custHorizons.size === 0 || [...custHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
+          return stageOk && horizonOk ? pointColor(p.sentiment) : '#d1d5db'
+        }),
+        pointBorderColor: points.map((p) => {
+          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
+          const horizonOk = custHorizons.size === 0 || [...custHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
+          return stageOk && horizonOk ? '#fff' : '#d1d5db'
+        }),
         pointBorderWidth: 2,
         fill: false,
       })
@@ -143,12 +160,16 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
         borderDash: [7, 4],
         borderWidth: 2.5,
         pointRadius: COWORKER_POINTS.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
-        pointBackgroundColor: COWORKER_POINTS.map((p) =>
-          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
-        ),
-        pointBorderColor: COWORKER_POINTS.map((p) =>
-          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
-        ),
+        pointBackgroundColor: COWORKER_POINTS.map((p) => {
+          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
+          const horizonOk = cwHorizons.size === 0 || [...cwHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
+          return stageOk && horizonOk ? pointColor(p.sentiment) : '#d1d5db'
+        }),
+        pointBorderColor: COWORKER_POINTS.map((p) => {
+          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
+          const horizonOk = cwHorizons.size === 0 || [...cwHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
+          return stageOk && horizonOk ? '#fff' : '#d1d5db'
+        }),
         pointBorderWidth: 2,
         fill: false,
       })
@@ -303,43 +324,55 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
           })}
         </div>
 
-        {/* Curve toggle pills */}
-        <div style={{ display: 'flex', gap: 8, padding: '0.65rem 1rem 0', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#47607d', marginRight: 4 }}>Show:</span>
+        {/* Curve toggles with per-curve T1/T2/T3 horizon filters */}
+        <div style={{ display: 'flex', gap: 14, padding: '0.65rem 1rem 0', alignItems: 'center', flexWrap: 'wrap' }}>
           {CURVES.map((c) => {
-            const on = visible.has(c.id)
+            const on       = visible.has(c.id)
+            const horizons = c.id === 'customer' ? custHorizons : cwHorizons
+            const setter   = c.id === 'customer' ? setCustHorizons : setCwHorizons
             return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => toggle(c.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  padding: '0.3rem 0.85rem',
-                  border: `2px solid ${c.color}`,
-                  borderRadius: 999,
-                  background: on ? c.color : '#fff',
-                  color: on ? '#fff' : c.color,
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {c.dash && (
-                  <svg width="18" height="4" style={{ display: 'block' }}>
-                    <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" strokeDasharray="5,3" />
-                  </svg>
-                )}
-                {!c.dash && (
-                  <svg width="18" height="4" style={{ display: 'block' }}>
-                    <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" />
-                  </svg>
-                )}
-                {c.label}
-              </button>
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <button
+                  type="button"
+                  onClick={() => toggle(c.id)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7,
+                    padding: '0.3rem 0.85rem', border: `2px solid ${c.color}`, borderRadius: 999,
+                    background: on ? c.color : '#fff', color: on ? '#fff' : c.color,
+                    fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {c.dash ? (
+                    <svg width="18" height="4" style={{ display: 'block' }}>
+                      <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" strokeDasharray="5,3" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="4" style={{ display: 'block' }}>
+                      <line x1="0" y1="2" x2="18" y2="2" stroke="currentColor" strokeWidth="2.5" />
+                    </svg>
+                  )}
+                  {c.label}
+                </button>
+                {(['T1', 'T2', 'T3'] as const).map(h => {
+                  const active = horizons.has(h)
+                  const bg  = h === 'T1' ? '#e6f4ea' : h === 'T2' ? '#fff3e8' : '#f0f4f8'
+                  const col = h === 'T1' ? '#149238' : h === 'T2' ? '#ed6f2c' : '#64748b'
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => toggleHorizon(setter, h)}
+                      style={{
+                        padding: '2px 9px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700,
+                        border: `1.5px solid ${active ? col : '#e2e8f0'}`,
+                        background: active ? bg : '#fff',
+                        color: active ? col : '#94a3b8',
+                        cursor: 'pointer', transition: 'all 0.14s',
+                      }}
+                    >{h}</button>
+                  )
+                })}
+              </div>
             )
           })}
         </div>
@@ -447,10 +480,12 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
               )}
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 6 }}>Backlog</div>
-                {stageBacklog.length === 0 ? (
-                  <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>No backlog items for this stage.</p>
-                ) : (
-                  stageBacklog.map((item) => (
+                {(() => {
+                  const activeH = new Set([...custHorizons, ...cwHorizons])
+                  const shown = activeH.size > 0 ? stageBacklog.filter(b => activeH.has(b.horizon)) : stageBacklog
+                  return shown.length === 0 ? (
+                    <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>No backlog items for this stage.</p>
+                  ) : shown.map((item) => (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.35rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.82rem' }}>
                       <span style={{ padding: '2px 7px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.68rem' }}>
                         {item.horizon}
@@ -459,7 +494,7 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
                       <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{item.storyPoints}sp · {item.team}</span>
                     </div>
                   ))
-                )}
+                })()}
               </div>
             </div>
           </>
