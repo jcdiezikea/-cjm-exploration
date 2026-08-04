@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { STAGES, BACKLOG_ITEMS } from '../data/journeyData.ts'
+
+const HORIZONS = ['T1', 'T2', 'T3'] as const
+const HORIZON_LABEL: Record<string, string> = { T1: 'T1 — Now', T2: 'T2 — Next', T3: 'T3 — Future' }
+const HORIZON_BG: Record<string, string>    = { T1: '#f0fff4',  T2: '#fff8f0',  T3: '#f5f7fa' }
 import type { ProposalProps } from './types.ts'
 
 const CX_DATA: Record<string, Record<'action' | 'thought' | 'channel', string>> = {
@@ -125,21 +129,27 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
               </tr>
             ))}
 
-            {/* Backlog row */}
-            {visible.has('backlog') && (
-            <tr>
-              <td style={{ padding: '0.5rem 0.75rem', fontWeight: 700, fontSize: '0.76rem', background: '#fff8e1', borderRight: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 1 }}>📋 Backlog</td>
-              {STAGES.map((s) => (
-                <td key={s.name} style={{ padding: '0.4rem', borderLeft: '1px solid #e2e8f0', background: '#fff8e1', verticalAlign: 'top' }}>
-                  {BACKLOG_ITEMS.filter((b) => b.stage === s.name).map((item) => (
-                    <div key={item.id} style={{ fontSize: '0.68rem', marginBottom: 3, padding: '2px 6px', borderRadius: 4, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: '#333', fontWeight: 600 }}>
-                      {item.horizon} · {item.title}
-                    </div>
-                  ))}
+            {/* Backlog rows — one per horizon */}
+            {visible.has('backlog') && HORIZONS.map((h) => (
+              <tr key={h}>
+                <td style={{ padding: '0.5rem 0.75rem', fontWeight: 700, fontSize: '0.76rem', background: HORIZON_BG[h], borderRight: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 1, verticalAlign: 'top' }}>
+                  📋 {HORIZON_LABEL[h]}
                 </td>
-              ))}
-            </tr>
-            )}
+                {STAGES.map((s) => {
+                  const items = BACKLOG_ITEMS.filter((b) => b.stage === s.name && b.horizon === h)
+                  return (
+                    <td key={s.name} style={{ padding: '0.4rem', borderLeft: '1px solid #e2e8f0', background: HORIZON_BG[h], verticalAlign: 'top', minHeight: 48 }}>
+                      {items.map((item) => (
+                        <div key={item.id} style={{ marginBottom: 4, padding: '0.35rem 0.5rem', borderRadius: 6, background: '#fff', border: '1.5px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2f3237', lineHeight: 1.25 }}>{item.title}</div>
+                          <div style={{ marginTop: 3, fontSize: '0.64rem', color: '#94a3b8' }}>{item.team} · {item.storyPoints}sp</div>
+                        </div>
+                      ))}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
