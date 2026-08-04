@@ -171,15 +171,6 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '1.75rem' }}>
-            {STAGES.map(s => (
-              <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLORS[s.name] }} />
-                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{s.name}</span>
-              </div>
-            ))}
-          </div>
-
           <div style={{ fontSize: '0.76rem', color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>&#8595;</span> scroll to explore
           </div>
