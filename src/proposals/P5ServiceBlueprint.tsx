@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { STAGES, BACKLOG_ITEMS } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
@@ -23,13 +24,66 @@ const BS_DATA: Record<string, Record<'team' | 'system' | 'process', string>> = {
 
 export function P5ServiceBlueprint(_props: ProposalProps) {
   const colCount = STAGES.length + 1
+  const [visible, setVisible] = useState<Set<string>>(
+    new Set(['action', 'thought', 'channel', 'team', 'system', 'process', 'backlog'])
+  )
+  const tog = (key: string) => setVisible(prev => {
+    const next = new Set(prev)
+    next.has(key) ? next.delete(key) : next.add(key)
+    return next
+  })
+
+  const CX_ROWS = [
+    { key: 'action',  label: '👤 Customer action',  bg: '#f0f7ff' },
+    { key: 'thought', label: '💭 Thought / feeling', bg: '#f7f0ff' },
+    { key: 'channel', label: '📱 Channel',           bg: '#f0fff4' },
+  ] as const
+  const BS_ROWS = [
+    { key: 'team',    label: '🏢 Team responsible', bg: '#fafbfc' },
+    { key: 'system',  label: '⚙️ System / tool',    bg: '#f5f7fa' },
+    { key: 'process', label: '🔄 Process',           bg: '#fafbfc' },
+  ] as const
+
+  function Pill({ rowKey, label }: { rowKey: string; label: string }) {
+    const on = visible.has(rowKey)
+    return (
+      <button
+        type="button"
+        onClick={() => tog(rowKey)}
+        style={{
+          padding: '3px 11px', borderRadius: 999, fontSize: '0.72rem', fontWeight: on ? 700 : 400,
+          border: `1.5px solid ${on ? '#1c4f8f' : '#d7e1ec'}`,
+          background: on ? '#1c4f8f' : '#fff', color: on ? '#fff' : '#47607d',
+          cursor: 'pointer', transition: 'all 0.15s',
+        }}
+      >{label}</button>
+    )
+  }
 
   return (
     <div>
-      <h2 className="proposal-title">P5 — Service Blueprint</h2>
+      <h2 className="proposal-title">P1 — Service Blueprint</h2>
       <p className="proposal-desc">
         Extends the swimlane map across the Line of Visibility — separating what customers experience (Actions, Thoughts, Channels) from what happens backstage (Team, System, Process). This is the most complete view for cross-functional alignment: it shows which internal teams and systems are responsible for each customer moment, and maps backlog items to their operational context. Ideal for Engineering Managers and service design workshops.
       </p>
+
+      {/* Row visibility pills */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', marginBottom: '0.85rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Customer</span>
+          <Pill rowKey="action"  label="Action" />
+          <Pill rowKey="thought" label="Thought" />
+          <Pill rowKey="channel" label="Channel" />
+        </div>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Backstage</span>
+          <Pill rowKey="team"    label="Team" />
+          <Pill rowKey="system"  label="System" />
+          <Pill rowKey="process" label="Process" />
+          <Pill rowKey="backlog" label="Backlog" />
+        </div>
+      </div>
+
       <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
         <table style={{ borderCollapse: 'collapse', minWidth: 1020, width: '100%' }}>
           <thead>
@@ -41,12 +95,7 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
             </tr>
           </thead>
           <tbody>
-            {/* Customer-facing rows */}
-            {([
-              { key: 'action' as const, label: '👤 Customer action', bg: '#f0f7ff' },
-              { key: 'thought' as const, label: '💭 Thought / feeling', bg: '#f7f0ff' },
-              { key: 'channel' as const, label: '📱 Channel', bg: '#f0fff4' },
-            ] as const).map(({ key, label, bg }) => (
+            {CX_ROWS.filter(r => visible.has(r.key)).map(({ key, label, bg }) => (
               <tr key={key}>
                 <td style={{ padding: '0.5rem 0.75rem', fontWeight: 700, fontSize: '0.76rem', background: bg, borderRight: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 1 }}>{label}</td>
                 {STAGES.map((s) => (
@@ -65,11 +114,7 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
             </tr>
 
             {/* Backstage rows */}
-            {([
-              { key: 'team' as const, label: '🏢 Team responsible', bg: '#fafbfc' },
-              { key: 'system' as const, label: '⚙️ System / tool', bg: '#f5f7fa' },
-              { key: 'process' as const, label: '🔄 Process', bg: '#fafbfc' },
-            ] as const).map(({ key, label, bg }) => (
+            {BS_ROWS.filter(r => visible.has(r.key)).map(({ key, label, bg }) => (
               <tr key={key}>
                 <td style={{ padding: '0.5rem 0.75rem', fontWeight: 700, fontSize: '0.76rem', background: bg, borderRight: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 1 }}>{label}</td>
                 {STAGES.map((s) => (
@@ -81,6 +126,7 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
             ))}
 
             {/* Backlog row */}
+            {visible.has('backlog') && (
             <tr>
               <td style={{ padding: '0.5rem 0.75rem', fontWeight: 700, fontSize: '0.76rem', background: '#fff8e1', borderRight: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 1 }}>📋 Backlog</td>
               {STAGES.map((s) => (
@@ -93,6 +139,7 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
                 </td>
               ))}
             </tr>
+            )}
           </tbody>
         </table>
       </div>
