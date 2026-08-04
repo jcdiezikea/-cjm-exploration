@@ -426,6 +426,23 @@
   color: #111;
 }
 
+/* Push description to footer — works across all proposals without touching individual files */
+div:has(> .proposal-desc) {
+  display: flex;
+  flex-direction: column;
+}
+
+div:has(> .proposal-desc) > .proposal-desc {
+  order: 999;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  border-left: none;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+}
+
 .proposal-desc {
   margin: 0 0 1rem;
   font-size: 0.84rem;
