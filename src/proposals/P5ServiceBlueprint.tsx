@@ -64,6 +64,11 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
     )
   }
 
+  const STAGE_EMOJI: Record<string, string> = {
+    Recognising: '🔍', Exploring: '🗺️', Choosing: '🎯',
+    Committing: '🛒', Receiving: '📦', Integrating: '🏗️', Living: '🏠',
+  }
+
   return (
     <div>
       <h2 className="proposal-title">P1 — Service Blueprint</h2>
@@ -92,9 +97,11 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
         <table style={{ borderCollapse: 'collapse', minWidth: 1020, width: '100%' }}>
           <thead>
             <tr>
-              <th style={{ width: 125, background: '#111', color: '#fff', padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.78rem', position: 'sticky', left: 0, zIndex: 2 }}>Layer</th>
+              <th style={{ width: 125, background: '#e8eef6', color: '#111', padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, position: 'sticky', left: 0, zIndex: 2, borderRight: '1px solid #dde5ef', borderBottom: '2px solid #c0d0e8' }}>Layer</th>
               {STAGES.map((s) => (
-                <th key={s.name} style={{ background: '#111', color: '#fff', padding: '0.6rem', textAlign: 'center', fontSize: '0.78rem', borderLeft: '1px solid #333', minWidth: 145 }}>{s.name}</th>
+                <th key={s.name} style={{ background: '#f0f6ff', color: '#111', padding: '0.6rem', textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, borderLeft: '1px solid #dde5ef', borderBottom: '2px solid #c0d0e8', minWidth: 145 }}>
+                  {STAGE_EMOJI[s.name]} {s.name}
+                </th>
               ))}
             </tr>
           </thead>
