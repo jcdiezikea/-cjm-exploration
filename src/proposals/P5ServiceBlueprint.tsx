@@ -77,20 +77,15 @@ export function P5ServiceBlueprint(_props: ProposalProps) {
       </p>
 
       {/* Row visibility pills */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', marginBottom: '0.85rem', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Customer</span>
-          <Pill rowKey="action"  label="Action" />
-          <Pill rowKey="thought" label="Thought" />
-          <Pill rowKey="channel" label="Channel" />
-        </div>
-        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Backstage</span>
-          <Pill rowKey="team"    label="Team" />
-          <Pill rowKey="system"  label="System" />
-          <Pill rowKey="process" label="Process" />
-          <Pill rowKey="backlog" label="Backlog" />
-        </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 0.75rem', marginBottom: '0.85rem', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Filters</span>
+        <Pill rowKey="action"  label="Action" />
+        <Pill rowKey="thought" label="Thought" />
+        <Pill rowKey="channel" label="Channel" />
+        <Pill rowKey="team"    label="Team" />
+        <Pill rowKey="system"  label="System" />
+        <Pill rowKey="process" label="Process" />
+        <Pill rowKey="backlog" label="Backlog" />
       </div>
 
       <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
