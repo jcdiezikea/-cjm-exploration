@@ -232,7 +232,10 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
         const acts   = ALL_ACTIVITIES.filter(a => cjmOf(a) === stageName)
         const bl     = BACKLOG_ITEMS.filter(b => b.stage === stageName)
         const color  = STAGE_COLORS[stageName]
-        const chapterDim = stageF && stageF !== stageName
+        if (stageF && stageF !== stageName) return null
+        const visibleActs = acts.filter(a => actVisible(a))
+        const visibleBl   = bl.filter(b => blVisible(b))
+        if (hasFilters && visibleActs.length === 0 && visibleBl.length === 0) return null
         return (
           <div
             key={stageName}
@@ -242,8 +245,6 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
               borderRadius: 20, border: '1px solid #e2e8f0',
               padding: '2rem 2rem 1.5rem', marginBottom: '1.5rem',
               position: 'relative', overflow: 'hidden',
-              opacity: chapterDim ? 0.35 : 1,
-              transition: 'opacity 0.25s',
             }}
           >
             <div style={{ position: 'absolute', right: 14, top: 4, fontSize: '8rem', fontWeight: 900, color: 'rgba(0,0,0,0.04)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}>
@@ -268,16 +269,14 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(195px,1fr))', gap: 8, marginBottom: bl.length > 0 ? '1.2rem' : 0 }}>
-              {acts.map(a => (
+              {acts.filter(a => actVisible(a)).map(a => (
                 <div
                   key={a.id}
                   style={{
                     background: '#fff', borderRadius: 10,
                     border: `1.5px solid ${color}28`,
                     padding: '0.65rem 0.75rem',
-                    opacity: actVisible(a) ? 1 : 0.35,
-                    transition: 'opacity 0.25s',
-                    boxShadow: actVisible(a) ? '0 1px 4px rgba(0,0,0,0.05)' : 'none',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
                   }}
                 >
                   <div style={{ fontSize: '0.73rem', fontWeight: 700, color: '#15253b', lineHeight: 1.3, marginBottom: 6 }}>{a.title}</div>
@@ -302,7 +301,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
                 <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Backlog</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {(['T1', 'T2', 'T3'] as const).flatMap(h =>
-                    bl.filter(b => b.horizon === h).map(b => (
+                    bl.filter(b => b.horizon === h && blVisible(b)).map(b => (
                       <span
                         key={b.id}
                         style={{
@@ -310,8 +309,6 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
                           background: HORIZON_BG[h], color: HORIZON_COLOR[h],
                           border: `1px solid ${HORIZON_COLOR[h]}33`,
                           fontSize: '0.67rem',
-                          opacity: blVisible(b) ? 1 : 0.35,
-                          transition: 'opacity 0.25s',
                         }}
                       >
                         {h} · {b.title}
