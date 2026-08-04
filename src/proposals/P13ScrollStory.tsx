@@ -45,6 +45,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
   const [heroVisible, setHeroVisible] = useState(false)
   const [mounted,     setMounted]     = useState(false)
   const [navTop,      setNavTop]      = useState(0)
+  const [revealed,    setRevealed]    = useState<Set<string>>(new Set())
 
   const heroRef      = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -75,17 +76,24 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
     return () => obs.disconnect()
   }, [])
 
-  // Adds .s-visible to every .s-reveal element as it scrolls into view
+  // Reveal sections as they scroll into view, tracked in state so filter re-renders don't reset it
   useEffect(() => {
     const root = containerRef.current
     if (!root) return
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach(e => {
-        if (e.isIntersecting) (e.target as HTMLElement).classList.add('s-visible')
-      }),
+      (entries) => {
+        const ids: string[] = []
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const id = (e.target as HTMLElement).dataset.revealId
+            if (id) ids.push(id)
+          }
+        })
+        if (ids.length) setRevealed(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n })
+      },
       { threshold: 0.08, rootMargin: '0px 0px -30px 0px' },
     )
-    root.querySelectorAll('.s-reveal').forEach(el => obs.observe(el))
+    root.querySelectorAll('[data-reveal-id]').forEach(el => obs.observe(el))
     return () => obs.disconnect()
   }, [])
 
@@ -239,7 +247,8 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
         return (
           <div
             key={stageName}
-            className="s-reveal"
+            data-reveal-id={`stage-${stageName}`}
+            className={revealed.has(`stage-${stageName}`) ? 's-reveal s-visible' : 's-reveal'}
             style={{
               background: si % 2 === 0 ? '#fff' : '#f8fafc',
               borderRadius: 20, border: '1px solid #e2e8f0',
@@ -323,7 +332,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
       })}
 
       {/* ── Sprint focus: T1 ──────────────────────────────────────── */}
-      <div className="s-reveal" style={{ marginBottom: '1.5rem' }}>
+      <div data-reveal-id="t1-sprint" className={revealed.has('t1-sprint') ? 's-reveal s-visible' : 's-reveal'} style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
           <div style={{ width: 5, height: 34, borderRadius: 3, background: '#ffc800' }} />
           <div>
@@ -354,7 +363,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
       </div>
 
       {/* ── Strategic objectives ──────────────────────────────────── */}
-      <div className="s-reveal" style={{ marginBottom: '2.5rem' }}>
+      <div data-reveal-id="objectives" className={revealed.has('objectives') ? 's-reveal s-visible' : 's-reveal'} style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
           <div style={{ width: 5, height: 34, borderRadius: 3, background: '#8b5cf6' }} />
           <div>
