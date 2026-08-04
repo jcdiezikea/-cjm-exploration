@@ -413,7 +413,7 @@
 .proposal-body {
   flex: 1;
   padding: 1.25rem;
-  overflow: auto;
+  overflow: visible;
 }
 
 .s-reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.45s ease, transform 0.45s ease; }

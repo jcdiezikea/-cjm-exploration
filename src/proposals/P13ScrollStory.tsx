@@ -44,11 +44,25 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
   const [objectiveF, setObjectiveF] = useState<string | null>(null)
   const [heroVisible, setHeroVisible] = useState(false)
   const [mounted,     setMounted]     = useState(false)
+  const [navTop,      setNavTop]      = useState(0)
 
   const heroRef      = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Track sticky nav height so filter bar sticks just below it
+  useEffect(() => {
+    const measure = () => {
+      const nav = document.querySelector('.proposal-nav')
+      if (nav) setNavTop(nav.getBoundingClientRect().height)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    const nav = document.querySelector('.proposal-nav')
+    if (nav) ro.observe(nav)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const el = heroRef.current
@@ -166,7 +180,7 @@ export function P13ScrollStory({ onStageClick }: ProposalProps) {
 
       {/* ── Sticky filter bar ─────────────────────────────────────── */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 10,
+        position: 'sticky', top: navTop, zIndex: 10,
         background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(8px)',
         borderBottom: '1px solid #d7e1ec',
         padding: '0.55rem 0.75rem', marginBottom: '1.5rem',
