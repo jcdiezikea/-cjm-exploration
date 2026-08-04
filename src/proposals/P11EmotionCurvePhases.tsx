@@ -58,6 +58,21 @@ for (const item of BACKLOG_ITEMS) {
   STAGE_HORIZONS[item.stage].add(item.horizon)
 }
 
+// How many y-points each horizon improves co-worker experience (lower y = higher on chart)
+const HORIZON_BOOST: Record<string, number> = { T1: 20, T2: 12, T3: 8 }
+
+function applyHorizonBoost(pts: JourneyPoint[], horizons: Set<string>): JourneyPoint[] {
+  if (horizons.size === 0) return pts
+  return pts.map(p => {
+    const stage = stageOfPoint(p)
+    let delta = 0
+    for (const h of horizons) {
+      if (STAGE_HORIZONS[stage]?.has(h)) delta += HORIZON_BOOST[h] ?? 0
+    }
+    return delta ? { ...p, y: Math.max(8, p.y - delta) } : p
+  })
+}
+
 function wrapText(text: string, maxLen = 52): string[] {
   const words = text.split(' ')
   const lines: string[] = []
@@ -94,13 +109,18 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
     setter(prev => { const next = new Set(prev); next.has(h) ? next.delete(h) : next.add(h); return next })
   }
 
+  const cwPoints = useMemo(
+    () => applyHorizonBoost(COWORKER_POINTS, cwHorizons),
+    [cwHorizons],
+  )
+
   const custStagePts = useMemo(
     () => (activeStage && visible.has('customer') ? points.filter((p) => stageOfPoint(p) === activeStage) : []),
     [activeStage, points, visible],
   )
   const cwStagePts = useMemo(
-    () => (activeStage && visible.has('coworker') ? COWORKER_POINTS.filter((p) => stageOfPoint(p) === activeStage) : []),
-    [activeStage, visible],
+    () => (activeStage && visible.has('coworker') ? cwPoints.filter((p) => stageOfPoint(p) === activeStage) : []),
+    [activeStage, cwPoints, visible],
   )
   const totalStageMoments = custStagePts.length + cwStagePts.length
 
@@ -116,12 +136,12 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
         const start = (si / STAGES.length) * 100
         const end = ((si + 1) / STAGES.length) * 100
         const custPts = points.filter((p) => p.x >= start && p.x < end)
-        const cwPts = COWORKER_POINTS.filter((p) => p.x >= start && p.x < end)
+        const cwPts = cwPoints.filter((p) => p.x >= start && p.x < end)
         const custAvg = custPts.length ? custPts.reduce((a, p) => a + p.y, 0) / custPts.length : 50
         const cwAvg = cwPts.length ? cwPts.reduce((a, p) => a + p.y, 0) / cwPts.length : 50
         return { stage: s.name, diff: Math.round(Math.abs(custAvg - cwAvg)), custAvg, cwAvg }
       }).sort((a, b) => b.diff - a.diff),
-    [points],
+    [points, cwPoints],
   )
 
   const chartData = useMemo(() => {
@@ -148,29 +168,25 @@ export function P11EmotionCurvePhases({ points, onStageClick }: ProposalProps) {
     if (visible.has('coworker')) {
       datasets.push({
         label: 'Co-worker',
-        data: COWORKER_POINTS.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
+        data: cwPoints.map((p) => ({ x: p.x, y: 100 - p.y, text: p.text, sentiment: p.sentiment })),
         parsing: false as const,
         tension: 0.45,
         borderColor: '#e85d04',
         borderDash: [7, 4],
         borderWidth: 2.5,
-        pointRadius: COWORKER_POINTS.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
-        pointBackgroundColor: COWORKER_POINTS.map((p) => {
-          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
-          const horizonOk = cwHorizons.size === 0 || [...cwHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
-          return stageOk && horizonOk ? pointColor(p.sentiment) : '#d1d5db'
-        }),
-        pointBorderColor: COWORKER_POINTS.map((p) => {
-          const stageOk   = !activeStage || stageOfPoint(p) === activeStage
-          const horizonOk = cwHorizons.size === 0 || [...cwHorizons].some(h => STAGE_HORIZONS[stageOfPoint(p)]?.has(h))
-          return stageOk && horizonOk ? '#fff' : '#d1d5db'
-        }),
+        pointRadius: cwPoints.map((p) => (!activeStage ? 8 : stageOfPoint(p) === activeStage ? 13 : 4)),
+        pointBackgroundColor: cwPoints.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? pointColor(p.sentiment) : '#d1d5db',
+        ),
+        pointBorderColor: cwPoints.map((p) =>
+          !activeStage || stageOfPoint(p) === activeStage ? '#fff' : '#d1d5db',
+        ),
         pointBorderWidth: 2,
         fill: false,
       })
     }
     return { datasets }
-  }, [points, activeStage, visible])
+  }, [points, activeStage, visible, cwPoints])
 
   const highlightPlugin = useMemo(
     () => ({
