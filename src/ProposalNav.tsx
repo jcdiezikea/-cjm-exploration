@@ -8,7 +8,6 @@ import { P10Heatmap } from './proposals/P10Heatmap.tsx'
 import { P11EmotionCurvePhases } from './proposals/P11EmotionCurvePhases.tsx'
 import { Others } from './proposals/Others.tsx'
 import { Survey } from './proposals/Survey.tsx'
-import { InsightStrip } from './components/InsightStrip.tsx'
 import { StageDrawer } from './components/StageDrawer.tsx'
 import { ChatPanel } from './components/ChatPanel.tsx'
 
@@ -47,8 +46,6 @@ export function ProposalNav() {
           </button>
         ))}
       </nav>
-
-      <InsightStrip />
 
       <div className="proposal-body">
         <CurrentProposal

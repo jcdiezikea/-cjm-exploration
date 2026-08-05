@@ -2,6 +2,23 @@ import { useState } from 'react'
 import { STAGES, STAGE_METRICS, BACKLOG_ITEMS } from '../data/journeyData.ts'
 import type { ProposalProps } from './types.ts'
 
+function deriveInsights() {
+  const worst  = [...STAGE_METRICS].sort((a, b) => a.nps - b.nps)[0]
+  const bestNPS = [...STAGE_METRICS].sort((a, b) => b.nps - a.nps)[0]
+  const highDrop = [...STAGE_METRICS].sort((a, b) => b.dropOff - a.dropOff)[0]
+  const highEff  = [...STAGE_METRICS].sort((a, b) => b.effort - a.effort)[0]
+  const topConv  = [...STAGE_METRICS].sort((a, b) => b.conversion - a.conversion)[0]
+  return [
+    { icon: '🔴', label: 'Lowest NPS',      value: `${worst.nps > 0 ? '+' : ''}${worst.nps}`,  stage: worst.stage,   note: 'Prioritise backlog here first' },
+    { icon: '📉', label: 'Highest drop-off', value: `${highDrop.dropOff}%`,                      stage: highDrop.stage, note: 'Biggest leakage in the funnel' },
+    { icon: '😓', label: 'Highest effort',   value: `${highEff.effort}/10`,                      stage: highEff.stage,  note: 'Customers work hardest here' },
+    { icon: '✅', label: 'Best conversion',  value: `${topConv.conversion}%`,                    stage: topConv.stage,  note: 'Model this stage for others' },
+    { icon: '🌟', label: 'Best NPS',         value: `${bestNPS.nps > 0 ? '+' : ''}${bestNPS.nps}`, stage: bestNPS.stage, note: 'Highest satisfaction score' },
+  ]
+}
+
+const HEATMAP_INSIGHTS = deriveInsights()
+
 type MetricKey = 'nps' | 'conversion' | 'dropOff' | 'effort'
 
 const METRICS: { key: MetricKey; label: string; unit: string; invert: boolean; max: number }[] = [
@@ -88,6 +105,17 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><span style={{ width: 14, height: 14, borderRadius: 3, background: '#e6f4ea', border: '1px solid #ccc', display: 'inline-block' }} />Good</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><span style={{ width: 14, height: 14, borderRadius: 3, background: '#ffeaea', border: '1px solid #ccc', display: 'inline-block' }} />Needs attention</span>
         </div>
+      </div>
+
+      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {HEATMAP_INSIGHTS.map((ins) => (
+          <div key={ins.label} style={{ flex: '1 1 160px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem 1rem' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.icon} {ins.label}</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', lineHeight: 1 }}>{ins.value}</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1c4f8f', marginTop: 3 }}>{ins.stage}</div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>{ins.note}</div>
+          </div>
+        ))}
       </div>
 
       {sel && (
