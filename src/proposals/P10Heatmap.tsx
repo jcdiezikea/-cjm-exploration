@@ -19,13 +19,23 @@ function deriveInsights() {
 
 const HEATMAP_INSIGHTS = deriveInsights()
 
-type MetricKey = 'nps' | 'conversion' | 'dropOff' | 'effort'
+type MetricKey = 'nps' | 'conversion' | 'dropOff' | 'effort' | 'csat'
+
+// CSAT derived from NPS and conversion — not stored in STAGE_METRICS
+function getCsat(sm: { nps: number; conversion: number }): number {
+  return Math.round(((sm.nps + 50) / 100) * 60 + (sm.conversion / 100) * 40)
+}
+
+function getMetricValue(sm: typeof STAGE_METRICS[0], key: MetricKey): number {
+  return key === 'csat' ? getCsat(sm) : sm[key]
+}
 
 const METRICS: { key: MetricKey; label: string; unit: string; invert: boolean; max: number }[] = [
-  { key: 'nps', label: 'NPS', unit: '', invert: false, max: 100 },
-  { key: 'conversion', label: 'Conversion', unit: '%', invert: false, max: 100 },
-  { key: 'dropOff', label: 'Drop-off', unit: '%', invert: true, max: 100 },
-  { key: 'effort', label: 'Effort score', unit: '/10', invert: true, max: 10 },
+  { key: 'nps',        label: 'NPS',          unit: '',    invert: false, max: 100 },
+  { key: 'csat',       label: 'CSAT',         unit: '',    invert: false, max: 100 },
+  { key: 'conversion', label: 'Conversion',   unit: '%',   invert: false, max: 100 },
+  { key: 'dropOff',    label: 'Drop-off',     unit: '%',   invert: true,  max: 100 },
+  { key: 'effort',     label: 'Effort score', unit: '/10', invert: true,  max: 10  },
 ]
 
 function hexToRgb(hex: string) {
@@ -71,7 +81,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
           </thead>
           <tbody>
             {METRICS.map((m) => {
-              const values = STAGE_METRICS.map((sm) => sm[m.key] as number)
+              const values = STAGE_METRICS.map((sm) => getMetricValue(sm, m.key))
               const min = Math.min(...values)
               const max = Math.max(...values)
               return (
@@ -80,7 +90,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
                     {m.label}
                   </td>
                   {STAGE_METRICS.map((sm) => {
-                    const val = sm[m.key] as number
+                    const val = getMetricValue(sm, m.key)
                     const bg = cellColor(val, min, max, m.invert)
                     const isSelected = sel?.stage === sm.stage && sel?.metric === m.key
                     return (
@@ -90,7 +100,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
                         style={{ padding: '0.85rem 0.5rem', textAlign: 'center', borderLeft: '1px solid #e2e8f0', background: bg, cursor: 'pointer', outline: isSelected ? '2px solid #1c4f8f' : 'none', outlineOffset: -2, transition: 'outline 0.1s' }}
                       >
                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#111' }}>
-                          {m.key === 'nps' && val > 0 ? '+' : ''}{val}{m.unit}
+                          {(m.key === 'nps' || m.key === 'csat') && val > 0 ? '+' : ''}{val}{m.unit}
                         </div>
                       </td>
                     )
@@ -116,7 +126,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
               onClick={() => setSel(isActive ? null : { stage: ins.stage, metric: ins.metricKey })}
               style={{ flex: '1 1 160px', background: '#fff', border: `2px solid ${isActive ? '#1c4f8f' : '#e2e8f0'}`, borderRadius: 12, padding: '0.75rem 1rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
             >
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.icon} {ins.label}</div>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.label}</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', lineHeight: 1 }}>{ins.value}</div>
               <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1c4f8f', marginTop: 3 }}>{ins.stage}</div>
               <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>{ins.note}</div>
