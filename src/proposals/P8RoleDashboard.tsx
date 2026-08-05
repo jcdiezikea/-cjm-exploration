@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { STAGES, STAGE_METRICS, BACKLOG_ITEMS, type Role } from '../data/journeyData.ts'
+import { STAGE_SUGGESTIONS, type Suggestion } from '../data/suggestionsData.ts'
 import { JourneyChart } from '../JourneyChart.tsx'
 import type { ProposalProps } from './types.ts'
 
@@ -21,28 +22,132 @@ function MiniBar({ value, max, color }: { value: number; max: number; color: str
 }
 
 function BusinessTab() {
+  const [selStage, setSelStage] = useState<string | null>(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  const [addedItems, setAddedItems] = useState<(Suggestion & { stage: string })[]>([])
+
+  function handleSelect(stage: string) {
+    setSelStage(prev => prev === stage ? null : stage)
+    setShowSuggestions(false)
+  }
+
+  function addSuggestion(s: Suggestion) {
+    if (addedIds.has(s.id) || !selStage) return
+    setAddedIds(prev => new Set([...prev, s.id]))
+    setAddedItems(prev => [...prev, { ...s, stage: selStage }])
+  }
+
   return (
-    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-      {STAGE_METRICS.map((m) => {
-        const nc = m.nps >= 10 ? '#149238' : m.nps >= 0 ? '#ed6f2c' : '#d2001f'
-        return (
-          <div key={m.stage} style={{ flex: '1 1 140px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 4 }}>{m.stage}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: nc }}>
-              {m.nps > 0 ? '+' : ''}{m.nps}
-              <span style={{ fontSize: '0.65rem', color: '#888', marginLeft: 3 }}>NPS</span>
+    <div>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {STAGE_METRICS.map((m) => {
+          const nc = m.nps >= 10 ? '#149238' : m.nps >= 0 ? '#ed6f2c' : '#d2001f'
+          const isSelected = selStage === m.stage
+          return (
+            <div
+              key={m.stage}
+              onClick={() => handleSelect(m.stage)}
+              style={{ flex: '1 1 140px', background: '#fff', border: `2px solid ${isSelected ? '#1c4f8f' : '#e2e8f0'}`, borderRadius: 12, padding: '0.85rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
+            >
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 4 }}>{m.stage}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: nc }}>
+                {m.nps > 0 ? '+' : ''}{m.nps}
+                <span style={{ fontSize: '0.65rem', color: '#888', marginLeft: 3 }}>NPS</span>
+              </div>
+              <div style={{ marginTop: 6, fontSize: '0.74rem', color: '#47607d' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Conv.</span><b>{m.conversion}%</b></div>
+                <MiniBar value={m.conversion} max={100} color="#1c4f8f" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Drop</span><b>{m.dropOff}%</b></div>
+                <MiniBar value={m.dropOff} max={100} color="#d2001f" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Effort</span><b>{m.effort}/10</b></div>
+                <MiniBar value={m.effort} max={10} color="#ed6f2c" />
+              </div>
             </div>
-            <div style={{ marginTop: 6, fontSize: '0.74rem', color: '#47607d' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Conv.</span><b>{m.conversion}%</b></div>
-              <MiniBar value={m.conversion} max={100} color="#1c4f8f" />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Drop</span><b>{m.dropOff}%</b></div>
-              <MiniBar value={m.dropOff} max={100} color="#d2001f" />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Effort</span><b>{m.effort}/10</b></div>
-              <MiniBar value={m.effort} max={10} color="#ed6f2c" />
+          )
+        })}
+      </div>
+
+      {selStage && (() => {
+        const stageBacklog = [
+          ...BACKLOG_ITEMS.filter((b) => b.stage === selStage),
+          ...addedItems.filter((b) => b.stage === selStage),
+        ]
+        const suggestions = (STAGE_SUGGESTIONS[selStage] ?? [])
+          .filter((s) => !addedIds.has(s.id))
+          .sort((a, b) => (b.impacts.nps ?? 0) - (a.impacts.nps ?? 0))
+
+        return (
+          <div style={{ marginTop: '1rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 8 }}>
+              Backlog — <strong>{selStage}</strong>
+            </div>
+            {stageBacklog.length === 0 && (
+              <p style={{ color: '#47607d', margin: 0, fontSize: '0.84rem' }}>No backlog items for this stage.</p>
+            )}
+            {stageBacklog.map((item) => {
+              const isProposed = addedIds.has(item.id)
+              return (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.4rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.84rem' }}>
+                  <span style={{ padding: '2px 8px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.7rem' }}>{item.horizon}</span>
+                  {isProposed && <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f0f4ff', color: '#1c4f8f', fontWeight: 700, fontSize: '0.7rem' }}>Proposed</span>}
+                  <span style={{ flex: 1 }}>{item.title}</span>
+                  <span style={{ color: item.priority === 'must-have' ? '#d2001f' : item.priority === 'nice-to-have' ? '#ed6f2c' : '#888', fontSize: '0.74rem' }}>{item.priority}</span>
+                  <span style={{ color: '#aaa', fontSize: '0.74rem' }}>{item.storyPoints}sp · {item.team}</span>
+                </div>
+              )
+            })}
+
+            <div style={{ marginTop: '0.75rem', borderTop: '1px solid #f0f4f8', paddingTop: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(v => !v)}
+                style={{ padding: '0.4rem 1rem', borderRadius: 8, border: '1.5px solid #1c4f8f', background: showSuggestions ? '#1c4f8f' : '#fff', color: showSuggestions ? '#fff' : '#1c4f8f', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                {showSuggestions ? '▲ Hide proposals' : '▼ Suggest improvements'}
+              </button>
+
+              {showSuggestions && (
+                <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.6rem' }}>
+                  {suggestions.length === 0 && (
+                    <p style={{ color: '#47607d', margin: 0, fontSize: '0.84rem' }}>All suggestions already added.</p>
+                  )}
+                  {suggestions.map((s) => (
+                    <div key={s.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: 10, background: '#fafbfc' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.84rem', color: '#111', marginBottom: 6 }}>{s.title}</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 999, background: s.horizon === 'T1' ? '#e6f4ea' : s.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: s.horizon === 'T1' ? '#149238' : s.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.7rem' }}>{s.horizon}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f5f7fa', color: '#47607d', fontSize: '0.7rem' }}>{s.team}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f5f7fa', color: '#47607d', fontSize: '0.7rem' }}>{s.storyPoints}sp</span>
+                          {Object.entries(s.impacts).map(([k, v]) => {
+                            if (v == null) return null
+                            const invertedKeys = ['dropOff', 'effort']
+                            const good = invertedKeys.includes(k) ? v < 0 : v > 0
+                            const label = k === 'nps' ? 'NPS' : k === 'csat' ? 'CSAT' : k === 'conversion' ? 'Conv.' : k === 'dropOff' ? 'Drop-off' : 'Effort'
+                            return (
+                              <span key={k} style={{ padding: '2px 8px', borderRadius: 999, background: good ? '#e6f4ea' : '#ffeaea', color: good ? '#149238' : '#d2001f', fontWeight: 700, fontSize: '0.7rem' }}>
+                                {v > 0 ? '+' : ''}{v} {label}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addSuggestion(s)}
+                        style={{ flexShrink: 0, padding: '0.35rem 0.8rem', borderRadius: 8, border: 'none', background: '#1c4f8f', color: '#fff', fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer' }}
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
-      })}
+      })()}
     </div>
   )
 }
