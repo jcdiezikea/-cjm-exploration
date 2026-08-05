@@ -22,19 +22,21 @@ const PROPOSALS = [
 ]
 
 export function ProposalNav() {
-  const [started, setStarted] = useState(false)
-  const [active, setActive] = useState(1)
+  const [active, setActive] = useState(0)
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
 
-  if (!started) {
-    return <Intro onStart={() => setStarted(true)} />
-  }
-
-  const CurrentProposal = PROPOSALS.find((p) => p.id === active)!.component
+  const proposal = PROPOSALS.find((p) => p.id === active)
 
   return (
-    <div className="nav-shell">
+    <div className={active === 0 ? undefined : 'nav-shell'}>
       <nav className="proposal-nav">
+        <button
+          type="button"
+          className={active === 0 ? 'active' : ''}
+          onClick={() => setActive(0)}
+        >
+          🏠 Intro
+        </button>
         {PROPOSALS.map((p) => (
           <button
             key={p.id}
@@ -47,13 +49,17 @@ export function ProposalNav() {
         ))}
       </nav>
 
-      <div className="proposal-body">
-        <CurrentProposal
-          points={BASE_POINTS}
-          activeFeatureIds={[]}
-          onStageClick={setSelectedStage}
-        />
-      </div>
+      {active === 0 ? (
+        <Intro onStart={() => setActive(1)} />
+      ) : proposal ? (
+        <div className="proposal-body">
+          <proposal.component
+            points={BASE_POINTS}
+            activeFeatureIds={[]}
+            onStageClick={setSelectedStage}
+          />
+        </div>
+      ) : null}
 
       <StageDrawer stageName={selectedStage} onClose={() => setSelectedStage(null)} />
       <ChatPanel />
