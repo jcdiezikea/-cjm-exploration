@@ -58,7 +58,7 @@ export function Intro({ onStart }: { onStart: () => void }) {
             <span className="intro-step-badge">1</span>
             <div>
               <strong>Navigate and explore the variations</strong>
-              <p>Use the tabs above to switch between P1 – P5 and the Others archive. Each view tells a different story — spend a few minutes in each one.</p>
+              <p>Use the tabs above to switch between P1 – P5. Each view tells a different story — spend a few minutes in each one.</p>
               <div className="intro-tip-banner">
                 <span className="intro-tip-icon">💡</span>
                 <span>Don't just skim — <strong>click, zoom, and interact</strong> with each version. Toggle filters, tap insight cards, and explore the backlog panels to get a real feel for what each format can show you.</span>
