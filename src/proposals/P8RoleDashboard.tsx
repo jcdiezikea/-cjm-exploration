@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { STAGES, STAGE_METRICS, BACKLOG_ITEMS, type Role } from '../data/journeyData.ts'
+import { STAGES, STAGE_METRICS, BACKLOG_ITEMS, type Role, type JourneyPoint, CJM_STAGES } from '../data/journeyData.ts'
 import { STAGE_SUGGESTIONS, type Suggestion } from '../data/suggestionsData.ts'
 import { JourneyChart } from '../JourneyChart.tsx'
 import type { ProposalProps } from './types.ts'
@@ -152,7 +152,82 @@ function BusinessTab() {
   )
 }
 
-function DesignTab({ points }: { points: ProposalProps['points'] }) {
+function slimPoints(points: JourneyPoint[]): JourneyPoint[] {
+  // Keep all peaks and pains; cap neutral/risk at 2 per stage to reduce clutter
+  const segW = 100 / CJM_STAGES.length
+  return CJM_STAGES.flatMap((_stage, idx) => {
+    const stagePoints = points.filter(
+      (p) => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5
+    )
+    const peaks   = stagePoints.filter(p => p.sentiment === 'gain')
+    const pains   = stagePoints.filter(p => p.sentiment === 'pain')
+    const neutral = stagePoints.filter(p => p.sentiment === 'risk').slice(0, 2)
+    return [...peaks, ...neutral, ...pains]
+  })
+}
+
+function deriveDesignInsights(points: JourneyPoint[]) {
+  const gains = points.filter(p => p.sentiment === 'gain').sort((a, b) => a.y - b.y)
+  const pains = points.filter(p => p.sentiment === 'pain').sort((a, b) => b.y - a.y)
+
+  // Stage with most pain points
+  const painsByStage = CJM_STAGES.map(stage => {
+    const segW = 100 / CJM_STAGES.length
+    const idx = CJM_STAGES.indexOf(stage)
+    const count = pains.filter(p => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5).length
+    return { stage, count }
+  }).sort((a, b) => b.count - a.count)
+
+  // Stage with most gain points (strongest positive stretch)
+  const gainsByStage = CJM_STAGES.map(stage => {
+    const segW = 100 / CJM_STAGES.length
+    const idx = CJM_STAGES.indexOf(stage)
+    const count = gains.filter(p => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5).length
+    return { stage, count }
+  }).sort((a, b) => b.count - a.count)
+
+  return {
+    bestMoment:   gains[0] ?? null,
+    worstPain:    pains[0] ?? null,
+    painStage:    painsByStage[0]?.count > 0 ? painsByStage[0] : null,
+    peakStage:    gainsByStage[0]?.count > 0 ? gainsByStage[0] : null,
+    peakCount:    gains.length,
+    painCount:    pains.length,
+  }
+}
+
+function DesignTab({ points }: { points: JourneyPoint[] }) {
+  const slim = slimPoints(points)
+  const ins  = deriveDesignInsights(slim)
+
+  const insightCards = [
+    ins.bestMoment && {
+      label: 'Best moment',
+      value: ins.bestMoment.text.length > 55 ? ins.bestMoment.text.slice(0, 55) + '…' : ins.bestMoment.text,
+      color: '#149238', bg: '#e6f4ea',
+    },
+    ins.worstPain && {
+      label: 'Biggest pain',
+      value: ins.worstPain.text.length > 55 ? ins.worstPain.text.slice(0, 55) + '…' : ins.worstPain.text,
+      color: '#d2001f', bg: '#ffeaea',
+    },
+    ins.painStage && {
+      label: 'Most painful stage',
+      value: `${ins.painStage.stage} — ${ins.painStage.count} pain point${ins.painStage.count > 1 ? 's' : ''}`,
+      color: '#ed6f2c', bg: '#fff3e8',
+    },
+    ins.peakStage && {
+      label: 'Strongest stage',
+      value: `${ins.peakStage.stage} — ${ins.peakStage.count} peak moment${ins.peakStage.count > 1 ? 's' : ''}`,
+      color: '#1c4f8f', bg: '#f0f6ff',
+    },
+    {
+      label: 'Signal balance',
+      value: `${ins.peakCount} peaks · ${ins.painCount} pain points`,
+      color: '#47607d', bg: '#f5f7fa',
+    },
+  ].filter(Boolean) as { label: string; value: string; color: string; bg: string }[]
+
   return (
     <div>
       <div className="proposal-card">
@@ -161,13 +236,14 @@ function DesignTab({ points }: { points: ProposalProps['points'] }) {
             <div key={s.name} className="stage-header-box" style={{ flexGrow: s.weight }}>{s.name}</div>
           ))}
         </div>
-        <JourneyChart points={points} stages={STAGES.map((s) => s.name)} />
+        <JourneyChart points={slim} stages={STAGES.map((s) => s.name)} />
       </div>
-      <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
-        {points.filter((p) => p.sentiment === 'pain').slice(0, 4).map((p) => (
-          <div key={p.id} style={{ background: '#fff', border: '1px solid #fbb', borderRadius: 12, padding: '0.75rem' }}>
-            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#d2001f', marginBottom: 4, textTransform: 'uppercase' }}>Pain point</div>
-            <div style={{ fontSize: '0.82rem', color: '#2f3237', lineHeight: 1.4 }}>{p.text}</div>
+
+      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {insightCards.map((card) => (
+          <div key={card.label} style={{ flex: '1 1 160px', background: card.bg, border: `1px solid ${card.color}33`, borderRadius: 12, padding: '0.85rem 1rem' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: card.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{card.label}</div>
+            <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111', lineHeight: 1.4 }}>{card.value}</div>
           </div>
         ))}
       </div>
