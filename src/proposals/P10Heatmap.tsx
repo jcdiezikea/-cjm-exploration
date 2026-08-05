@@ -60,8 +60,67 @@ function cellColor(value: number, min: number, max: number, invert: boolean): st
   return lerpColor(bad, '#e6f4ea', '#ffeaea')
 }
 
+type Suggestion = {
+  id: string; title: string; team: string
+  horizon: 'T1' | 'T2' | 'T3'; storyPoints: number
+  priority: 'must-have' | 'nice-to-have' | 'like-to-have'
+  impacts: Partial<Record<MetricKey, number>>
+}
+
+const STAGE_SUGGESTIONS: Record<string, Suggestion[]> = {
+  Recognising: [
+    { id: 's-rec1', title: 'Personalise Home Planning Hub entry points via CDP segments',     team: 'Digital Content', horizon: 'T2', storyPoints: 8,  priority: 'must-have',    impacts: { nps: 8,  csat: 5, conversion: 4 } },
+    { id: 's-rec2', title: 'A/B test AI-generated room inspiration on homepage hero',          team: 'Inter IMC',       horizon: 'T1', storyPoints: 5,  priority: 'nice-to-have', impacts: { nps: 5,  csat: 4 } },
+    { id: 's-rec3', title: 'Re-engagement email flow for lapsed home planning sessions',       team: 'Marketing',       horizon: 'T2', storyPoints: 5,  priority: 'must-have',    impacts: { conversion: 6, dropOff: -5 } },
+  ],
+  Exploring: [
+    { id: 's-exp1', title: 'Improve room scanner accuracy for small and irregular rooms',      team: 'Digital Product', horizon: 'T2', storyPoints: 13, priority: 'must-have',    impacts: { effort: -1,   csat: 6 } },
+    { id: 's-exp2', title: "Add 'complete the look' cross-links inside Kreativ",               team: 'Inter IMC',       horizon: 'T1', storyPoints: 5,  priority: 'nice-to-have', impacts: { conversion: 5, csat: 4 } },
+    { id: 's-exp3', title: 'Reduce 3D preview load time by 40% via asset streaming',           team: 'Digital Product', horizon: 'T2', storyPoints: 8,  priority: 'must-have',    impacts: { effort: -1.5, nps: 7, csat: 5 } },
+  ],
+  Choosing: [
+    { id: 's-cho1', title: 'Surface real-time stock availability inside GPC configurator',     team: 'Planning Tools',  horizon: 'T1', storyPoints: 8,  priority: 'must-have',    impacts: { nps: 10, csat: 7, dropOff: -5 } },
+    { id: 's-cho2', title: 'Auto-validate measurements before triggering 3D render',           team: 'Inter IMC',       horizon: 'T2', storyPoints: 5,  priority: 'nice-to-have', impacts: { effort: -1,   conversion: 5 } },
+    { id: 's-cho3', title: 'In-planner co-worker chat escalation widget',                      team: 'Commerce',        horizon: 'T2', storyPoints: 8,  priority: 'like-to-have', impacts: { csat: 6,  nps: 5 } },
+  ],
+  Committing: [
+    { id: 's-com1', title: 'Sync in-store kiosk session state with active mobile session',     team: 'Digital Product', horizon: 'T1', storyPoints: 13, priority: 'must-have',    impacts: { nps: 8,  csat: 6, effort: -1 } },
+    { id: 's-com2', title: 'One-click checkout for previously saved planner designs',          team: 'Commerce',        horizon: 'T1', storyPoints: 5,  priority: 'must-have',    impacts: { conversion: 7, dropOff: -6 } },
+    { id: 's-com3', title: 'Show 3D order summary with room preview before payment',           team: 'Commerce',        horizon: 'T2', storyPoints: 8,  priority: 'nice-to-have', impacts: { csat: 5,  nps: 4 } },
+  ],
+  Receiving: [
+    { id: 's-rec4', title: 'Proactive delay alerts with self-service reschedule option',       team: 'Logistics',       horizon: 'T1', storyPoints: 8,  priority: 'must-have',    impacts: { nps: 6,  csat: 5 } },
+    { id: 's-rec5', title: 'Post-delivery satisfaction micro-survey with follow-up',           team: 'Analytics',       horizon: 'T2', storyPoints: 5,  priority: 'nice-to-have', impacts: { nps: 8,  csat: 6 } },
+    { id: 's-rec6', title: 'Capture planning data at delivery to enable future personalisation', team: 'Analytics',     horizon: 'T3', storyPoints: 8,  priority: 'like-to-have', impacts: { csat: 4,  conversion: 3 } },
+  ],
+  Integrating: [
+    { id: 's-int1', title: 'Structured onboarding flow for co-workers on Commercial Planning', team: 'Inter M&CP',      horizon: 'T2', storyPoints: 8,  priority: 'must-have',    impacts: { effort: -1,   nps: 5 } },
+    { id: 's-int2', title: 'Direct IDS–GPC data bridge to eliminate manual re-entry',         team: 'Ingka Commerce',  horizon: 'T2', storyPoints: 13, priority: 'must-have',    impacts: { effort: -1.5, csat: 6 } },
+    { id: 's-int3', title: 'Real-time co-worker support escalation channel in-tool',           team: 'Inter M&CP',      horizon: 'T3', storyPoints: 5,  priority: 'like-to-have', impacts: { csat: 7,  nps: 6 } },
+  ],
+  Living: [
+    { id: 's-liv1', title: 'Joint Ingka–Inter governance dashboard for roadmap alignment',     team: 'Architecture',    horizon: 'T2', storyPoints: 8,  priority: 'must-have',    impacts: { nps: 5,  csat: 4 } },
+    { id: 's-liv2', title: 'Quarterly Home Planning Forum digest for stakeholders',            team: 'P&C',             horizon: 'T2', storyPoints: 5,  priority: 'nice-to-have', impacts: { nps: 4,  csat: 3 } },
+    { id: 's-liv3', title: 'Automated taxonomy update notifications across Ingka + Inter',     team: 'Architecture',    horizon: 'T3', storyPoints: 5,  priority: 'like-to-have', impacts: { effort: -0.5, conversion: 3 } },
+  ],
+}
+
 export function P10Heatmap({ onStageClick }: ProposalProps) {
   const [sel, setSel] = useState<{ stage: string; metric: MetricKey } | null>(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  const [addedItems, setAddedItems] = useState<(Suggestion & { stage: string })[]>([])
+
+  function handleSel(next: { stage: string; metric: MetricKey } | null) {
+    setSel(next)
+    setShowSuggestions(false)
+  }
+
+  function addSuggestion(s: Suggestion) {
+    if (addedIds.has(s.id) || !sel) return
+    setAddedIds(prev => new Set([...prev, s.id]))
+    setAddedItems(prev => [...prev, { ...s, stage: sel.stage }])
+  }
 
   return (
     <div>
@@ -96,7 +155,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
                     return (
                       <td
                         key={sm.stage}
-                        onClick={() => setSel(isSelected ? null : { stage: sm.stage, metric: m.key })}
+                        onClick={() => handleSel(isSelected ? null : { stage: sm.stage, metric: m.key })}
                         style={{ padding: '0.85rem 0.5rem', textAlign: 'center', borderLeft: '1px solid #e2e8f0', background: bg, cursor: 'pointer', outline: isSelected ? '2px solid #1c4f8f' : 'none', outlineOffset: -2, transition: 'outline 0.1s' }}
                       >
                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#111' }}>
@@ -123,7 +182,7 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
           return (
             <div
               key={ins.label}
-              onClick={() => setSel(isActive ? null : { stage: ins.stage, metric: ins.metricKey })}
+              onClick={() => handleSel(isActive ? null : { stage: ins.stage, metric: ins.metricKey })}
               style={{ flex: '1 1 160px', background: '#fff', border: `2px solid ${isActive ? '#1c4f8f' : '#e2e8f0'}`, borderRadius: 12, padding: '0.75rem 1rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
             >
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.label}</div>
@@ -135,26 +194,108 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
         })}
       </div>
 
-      {sel && (
-        <div style={{ marginTop: '1rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
-          <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 8 }}>
-            Backlog for <strong>{sel.stage}</strong> — improving <strong>{METRICS.find((m) => m.key === sel.metric)?.label}</strong>
-          </div>
-          {BACKLOG_ITEMS.filter((b) => b.stage === sel.stage).length === 0 && (
-            <p style={{ color: '#47607d', margin: 0, fontSize: '0.84rem' }}>No backlog items for this stage.</p>
-          )}
-          {BACKLOG_ITEMS.filter((b) => b.stage === sel.stage).map((item) => (
-            <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.4rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.84rem' }}>
-              <span style={{ padding: '2px 8px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.7rem' }}>
-                {item.horizon}
-              </span>
-              <span style={{ flex: 1 }}>{item.title}</span>
-              <span style={{ color: item.priority === 'must-have' ? '#d2001f' : item.priority === 'nice-to-have' ? '#ed6f2c' : '#888', fontSize: '0.74rem' }}>{item.priority}</span>
-              <span style={{ color: '#aaa', fontSize: '0.74rem' }}>{item.storyPoints}sp · {item.team}</span>
+      {sel && (() => {
+        const stageBacklog = [
+          ...BACKLOG_ITEMS.filter((b) => b.stage === sel.stage),
+          ...addedItems.filter((b) => b.stage === sel.stage),
+        ]
+        const selMetric = METRICS.find((m) => m.key === sel.metric)!
+        const selSM = STAGE_METRICS.find((sm) => sm.stage === sel.stage)!
+        const currentVal = getMetricValue(selSM, sel.metric)
+        const suggestions = (STAGE_SUGGESTIONS[sel.stage] ?? [])
+          .filter((s) => !addedIds.has(s.id))
+          .sort((a, b) => Math.abs(b.impacts[sel.metric] ?? 0) - Math.abs(a.impacts[sel.metric] ?? 0))
+
+        return (
+          <div style={{ marginTop: '1rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 8 }}>
+              Backlog for <strong>{sel.stage}</strong> — improving <strong>{selMetric.label}</strong>
             </div>
-          ))}
-        </div>
-      )}
+
+            {stageBacklog.length === 0 && (
+              <p style={{ color: '#47607d', margin: 0, fontSize: '0.84rem' }}>No backlog items for this stage.</p>
+            )}
+            {stageBacklog.map((item) => {
+              const isProposed = addedIds.has(item.id)
+              return (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.4rem 0', borderBottom: '1px solid #f0f4f8', fontSize: '0.84rem' }}>
+                  <span style={{ padding: '2px 8px', borderRadius: 999, background: item.horizon === 'T1' ? '#e6f4ea' : item.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: item.horizon === 'T1' ? '#149238' : item.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.7rem' }}>
+                    {item.horizon}
+                  </span>
+                  {isProposed && <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f0f4ff', color: '#1c4f8f', fontWeight: 700, fontSize: '0.7rem' }}>Proposed</span>}
+                  <span style={{ flex: 1 }}>{item.title}</span>
+                  <span style={{ color: item.priority === 'must-have' ? '#d2001f' : item.priority === 'nice-to-have' ? '#ed6f2c' : '#888', fontSize: '0.74rem' }}>{item.priority}</span>
+                  <span style={{ color: '#aaa', fontSize: '0.74rem' }}>{item.storyPoints}sp · {item.team}</span>
+                </div>
+              )
+            })}
+
+            <div style={{ marginTop: '0.75rem', borderTop: '1px solid #f0f4f8', paddingTop: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(v => !v)}
+                style={{ padding: '0.4rem 1rem', borderRadius: 8, border: '1.5px solid #1c4f8f', background: showSuggestions ? '#1c4f8f' : '#fff', color: showSuggestions ? '#fff' : '#1c4f8f', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                {showSuggestions ? '▲ Hide proposals' : '▼ Suggest improvements'}
+              </button>
+
+              {showSuggestions && (
+                <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.6rem' }}>
+                  {suggestions.length === 0 && (
+                    <p style={{ color: '#47607d', margin: 0, fontSize: '0.84rem' }}>All suggestions already added.</p>
+                  )}
+                  {suggestions.map((s) => {
+                    const delta = s.impacts[sel.metric]
+                    const projected = delta != null
+                      ? +(currentVal + delta).toFixed(1)
+                      : null
+                    const sign = delta != null && delta > 0 ? '+' : ''
+                    const isPositiveImpact = delta != null && (selMetric.invert ? delta < 0 : delta > 0)
+                    return (
+                      <div key={s.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: 10, background: '#fafbfc' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.84rem', color: '#111', marginBottom: 6 }}>{s.title}</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                            <span style={{ padding: '2px 8px', borderRadius: 999, background: s.horizon === 'T1' ? '#e6f4ea' : s.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: s.horizon === 'T1' ? '#149238' : s.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.7rem' }}>{s.horizon}</span>
+                            <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f5f7fa', color: '#47607d', fontSize: '0.7rem' }}>{s.team}</span>
+                            <span style={{ padding: '2px 8px', borderRadius: 999, background: '#f5f7fa', color: '#47607d', fontSize: '0.7rem' }}>{s.storyPoints}sp</span>
+                            {Object.entries(s.impacts).map(([k, v]) => {
+                              const m = METRICS.find(m => m.key === k)
+                              if (!m || v == null) return null
+                              const good = m.invert ? v < 0 : v > 0
+                              return (
+                                <span key={k} style={{ padding: '2px 8px', borderRadius: 999, background: good ? '#e6f4ea' : '#ffeaea', color: good ? '#149238' : '#d2001f', fontWeight: 700, fontSize: '0.7rem' }}>
+                                  {v > 0 ? '+' : ''}{v} {m.label}
+                                </span>
+                              )
+                            })}
+                          </div>
+                          {projected != null && (
+                            <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#47607d' }}>
+                              {selMetric.label}: <strong>{currentVal > 0 && (sel.metric === 'nps' || sel.metric === 'csat') ? '+' : ''}{currentVal}{selMetric.unit}</strong>
+                              {' → '}
+                              <strong style={{ color: isPositiveImpact ? '#149238' : '#d2001f' }}>
+                                {sign}{projected}{selMetric.unit}
+                              </strong>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addSuggestion(s)}
+                          style={{ flexShrink: 0, padding: '0.35rem 0.8rem', borderRadius: 8, border: 'none', background: '#1c4f8f', color: '#fff', fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer' }}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
