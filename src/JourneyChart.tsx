@@ -26,6 +26,9 @@ ChartJS.register(
 type JourneyChartProps = {
   points: JourneyPoint[]
   stages: string[]
+  xMin?: number
+  xMax?: number
+  showLabels?: 'none' | 'key' | 'all'
 }
 
 type RawPoint = { x: number; y: number; text: string; sentiment: string }
@@ -45,7 +48,7 @@ function wrapText(text: string, maxLen = 52): string[] {
   return lines
 }
 
-export function JourneyChart({ points, stages }: JourneyChartProps) {
+export function JourneyChart({ points, stages, xMin = 0, xMax = 100, showLabels = 'all' }: JourneyChartProps) {
   const data = useMemo(
     () => ({
       datasets: [
@@ -76,13 +79,13 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
     () => ({
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 600 },
+      animation: { duration: 300 },
       layout: { padding: 24 },
       scales: {
         x: {
           type: 'linear',
-          min: 0,
-          max: 100,
+          min: xMin,
+          max: xMax,
           grid: { display: false },
           ticks: {
             stepSize: 100 / stages.length,
@@ -136,6 +139,14 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
           },
         },
         datalabels: {
+          display: (ctx) => {
+            if (showLabels === 'none') return false
+            if (showLabels === 'key') {
+              const s = (ctx.dataset.data[ctx.dataIndex] as RawPoint).sentiment
+              return s === 'gain' || s === 'pain'
+            }
+            return true
+          },
           align: (ctx) => ((ctx.dataIndex % 2 === 0 ? 'top' : 'bottom') as 'top'),
           anchor: 'center',
           color: '#2f3237',
@@ -145,7 +156,7 @@ export function JourneyChart({ points, stages }: JourneyChartProps) {
         },
       },
     }),
-    [stages],
+    [stages, xMin, xMax, showLabels],
   )
 
   return (

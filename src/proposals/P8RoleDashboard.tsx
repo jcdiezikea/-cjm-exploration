@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type React from 'react'
 import { STAGES, STAGE_METRICS, BACKLOG_ITEMS, type Role, type JourneyPoint, CJM_STAGES } from '../data/journeyData.ts'
 import { STAGE_SUGGESTIONS, type Suggestion } from '../data/suggestionsData.ts'
 import { JourneyChart } from '../JourneyChart.tsx'
@@ -200,33 +201,87 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
   const slim = slimPoints(points)
   const ins  = deriveDesignInsights(slim)
 
+  // zoom: 0=full(7 stages), 1=4 stages, 2=2 stages
+  const WINDOWS = [100, 57, 28]
+  const [zoom, setZoom] = useState(0)
+  const [pan, setPan]   = useState(0)
+  const [activeCard, setActiveCard] = useState<string | null>(null)
+
+  const window = WINDOWS[zoom]
+  const maxPan = 100 - window
+  const xMin   = Math.min(pan, maxPan)
+  const xMax   = xMin + window
+  const labelMode: 'none' | 'key' | 'all' = zoom === 0 ? 'none' : zoom === 1 ? 'key' : 'all'
+
+  function zoomIn()  { setZoom(z => Math.min(z + 1, 2)); setPan(p => Math.min(p, 100 - WINDOWS[Math.min(zoom + 1, 2)])) }
+  function zoomOut() { setZoom(z => Math.max(z - 1, 0)); setPan(0) }
+  function panLeft()  { setPan(p => Math.max(p - window * 0.4, 0)) }
+  function panRight() { setPan(p => Math.min(p + window * 0.4, maxPan)) }
+
   const insightCards = [
     ins.bestMoment && {
+      id: 'best',
       label: 'Best moment',
       value: ins.bestMoment.text.length > 55 ? ins.bestMoment.text.slice(0, 55) + '…' : ins.bestMoment.text,
       color: '#149238', bg: '#e6f4ea',
+      detail: ins.bestMoment.text,
+      stage: null as string | null,
+      hasSuggestions: false,
     },
     ins.worstPain && {
+      id: 'pain',
       label: 'Biggest pain',
       value: ins.worstPain.text.length > 55 ? ins.worstPain.text.slice(0, 55) + '…' : ins.worstPain.text,
       color: '#d2001f', bg: '#ffeaea',
+      detail: ins.worstPain.text,
+      stage: (() => {
+        const segW = 100 / CJM_STAGES.length
+        const idx = Math.round(ins.worstPain!.x / segW)
+        return CJM_STAGES[Math.min(idx, CJM_STAGES.length - 1)] ?? null
+      })(),
+      hasSuggestions: true,
     },
     ins.painStage && {
+      id: 'painstage',
       label: 'Most painful stage',
       value: `${ins.painStage.stage} — ${ins.painStage.count} pain point${ins.painStage.count > 1 ? 's' : ''}`,
       color: '#ed6f2c', bg: '#fff3e8',
+      detail: `${ins.painStage.stage} concentrates more pain points than any other stage.`,
+      stage: ins.painStage.stage,
+      hasSuggestions: true,
     },
     ins.peakStage && {
+      id: 'peakstage',
       label: 'Strongest stage',
       value: `${ins.peakStage.stage} — ${ins.peakStage.count} peak moment${ins.peakStage.count > 1 ? 's' : ''}`,
       color: '#1c4f8f', bg: '#f0f6ff',
+      detail: `${ins.peakStage.stage} has the highest concentration of positive moments — a model worth replicating.`,
+      stage: ins.peakStage.stage,
+      hasSuggestions: false,
     },
     {
+      id: 'balance',
       label: 'Signal balance',
       value: `${ins.peakCount} peaks · ${ins.painCount} pain points`,
       color: '#47607d', bg: '#f5f7fa',
+      detail: ins.peakCount > ins.painCount
+        ? `More positive moments than pain points — the journey is broadly working, with targeted friction to address.`
+        : `Pain points outweigh peaks — systemic improvements are needed across the journey.`,
+      stage: null as string | null,
+      hasSuggestions: false,
     },
-  ].filter(Boolean) as { label: string; value: string; color: string; bg: string }[]
+  ].filter(Boolean) as { id: string; label: string; value: string; color: string; bg: string; detail: string; stage: string | null; hasSuggestions: boolean }[]
+
+  const active = insightCards.find(c => c.id === activeCard) ?? null
+  const stageSuggestions = active?.stage
+    ? (STAGE_SUGGESTIONS[active.stage] ?? []).sort((a, b) => (b.impacts.nps ?? 0) - (a.impacts.nps ?? 0))
+    : []
+
+  const btnStyle = (disabled: boolean): React.CSSProperties => ({
+    padding: '0.3rem 0.7rem', border: '1px solid #dde5ef', borderRadius: 6,
+    background: disabled ? '#f5f7fa' : '#fff', color: disabled ? '#aaa' : '#111',
+    fontWeight: 700, fontSize: '0.8rem', cursor: disabled ? 'default' : 'pointer',
+  })
 
   return (
     <div>
@@ -236,17 +291,66 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
             <div key={s.name} className="stage-header-box" style={{ flexGrow: s.weight }}>{s.name}</div>
           ))}
         </div>
-        <JourneyChart points={slim} stages={STAGES.map((s) => s.name)} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem 0' }}>
+          <button style={btnStyle(zoom === 0)} disabled={zoom === 0} onClick={zoomOut}>−</button>
+          <button style={btnStyle(zoom === 2)} disabled={zoom === 2} onClick={zoomIn}>+</button>
+          {zoom > 0 && <>
+            <button style={btnStyle(xMin <= 0)} disabled={xMin <= 0} onClick={panLeft}>←</button>
+            <button style={btnStyle(xMin >= maxPan)} disabled={xMin >= maxPan} onClick={panRight}>→</button>
+          </>}
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: 4 }}>
+            {zoom === 0 ? 'Full view — labels hidden' : zoom === 1 ? 'Mid zoom — key labels' : 'Zoomed — all labels'}
+          </span>
+        </div>
+
+        <JourneyChart points={slim} stages={STAGES.map((s) => s.name)} xMin={xMin} xMax={xMax} showLabels={labelMode} />
       </div>
 
       <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {insightCards.map((card) => (
-          <div key={card.label} style={{ flex: '1 1 160px', background: card.bg, border: `1px solid ${card.color}33`, borderRadius: 12, padding: '0.85rem 1rem' }}>
+          <div
+            key={card.id}
+            onClick={() => setActiveCard(activeCard === card.id ? null : card.id)}
+            style={{ flex: '1 1 160px', background: card.bg, border: `2px solid ${activeCard === card.id ? card.color : card.color + '33'}`, borderRadius: 12, padding: '0.85rem 1rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
+          >
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: card.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{card.label}</div>
             <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111', lineHeight: 1.4 }}>{card.value}</div>
           </div>
         ))}
       </div>
+
+      {active && (
+        <div style={{ marginTop: '1rem', background: '#fff', border: `1px solid ${active.color}44`, borderRadius: 14, padding: '1rem' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: active.color, marginBottom: 6 }}>{active.label}</div>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.88rem', color: '#2f3237', lineHeight: 1.6 }}>{active.detail}</p>
+
+          {active.hasSuggestions && stageSuggestions.length > 0 && (
+            <>
+              <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Potential improvements</div>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {stageSuggestions.map((s) => (
+                  <div key={s.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '0.6rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: 10, background: '#fafbfc' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.83rem', color: '#111', marginBottom: 5 }}>{s.title}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        <span style={{ padding: '2px 7px', borderRadius: 999, background: s.horizon === 'T1' ? '#e6f4ea' : s.horizon === 'T2' ? '#fff3e8' : '#f0f4f8', color: s.horizon === 'T1' ? '#149238' : s.horizon === 'T2' ? '#ed6f2c' : '#666', fontWeight: 700, fontSize: '0.69rem' }}>{s.horizon}</span>
+                        <span style={{ padding: '2px 7px', borderRadius: 999, background: '#f5f7fa', color: '#47607d', fontSize: '0.69rem' }}>{s.team} · {s.storyPoints}sp</span>
+                        {Object.entries(s.impacts).map(([k, v]) => {
+                          if (v == null) return null
+                          const good = ['dropOff','effort'].includes(k) ? v < 0 : v > 0
+                          const lbl = k === 'nps' ? 'NPS' : k === 'csat' ? 'CSAT' : k === 'conversion' ? 'Conv.' : k === 'dropOff' ? 'Drop-off' : 'Effort'
+                          return <span key={k} style={{ padding: '2px 7px', borderRadius: 999, background: good ? '#e6f4ea' : '#ffeaea', color: good ? '#149238' : '#d2001f', fontWeight: 700, fontSize: '0.69rem' }}>{v > 0 ? '+' : ''}{v} {lbl}</span>
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
