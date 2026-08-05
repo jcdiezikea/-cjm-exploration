@@ -326,7 +326,6 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
 }
 
 .proposal-nav {
