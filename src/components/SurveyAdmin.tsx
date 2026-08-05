@@ -64,6 +64,7 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
   const [responses, setRes] = useState<Response[]>([])
   const [loading, setLoad]  = useState(false)
   const [fetchErr, setFErr] = useState(false)
+  const [filterName, setFilterName] = useState<string | null>(null)
 
   async function tryUnlock() {
     if (pw !== ADMIN_PASSWORD) { setPwErr(true); return }
@@ -134,7 +135,10 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
     </div>
   )
 
-  const total = responses.length
+  const filtered = filterName ? responses.filter(r => r.name === filterName) : responses
+  const total = filtered.length
+  const participants = responses.map(r => r.name || '(anonymous)').filter((v, i, a) => a.indexOf(v) === i)
+
   const openFields: { q: string; field: keyof Response }[] = [
     { q: 'Views open (Q2)',                field: 'q2Open'   },
     { q: 'What makes views stand out (Q2)', field: 'q2bOpen' },
@@ -146,27 +150,48 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
     { q: 'Other feedback (Q9)',             field: 'q8Other' },
   ]
   const comments = openFields.flatMap(({ q, field }) =>
-    responses
+    filtered
       .filter(r => typeof r[field] === 'string' && (r[field] as string).trim())
       .map(r => ({ q, answer: r[field] as string, role: r.q1Role || '—', name: r.name || '—' }))
   )
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>Survey Results</h3>
-          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{total} response{total !== 1 ? 's' : ''}</span>
+          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{total} of {responses.length} response{responses.length !== 1 ? 's' : ''}{filterName ? ` — ${filterName}` : ''}</span>
         </div>
         <button onClick={onClose} style={{ padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', cursor: 'pointer' }}>
           ← Back
         </button>
       </div>
 
+      {/* Participant filter bar */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.25rem', padding: '0.75rem', background: '#f8faff', border: '1px solid #c7d8f5', borderRadius: 10 }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.07em', alignSelf: 'center', marginRight: 4 }}>Filter</span>
+        {['All', ...participants].map(name => {
+          const on = name === 'All' ? filterName === null : filterName === name
+          return (
+            <span
+              key={name}
+              onClick={() => setFilterName(name === 'All' ? null : on ? null : name)}
+              style={{ padding: '4px 12px', borderRadius: 999, fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', userSelect: 'none', transition: 'all 0.14s', border: `1.5px solid ${on ? '#1c4f8f' : '#dde5ef'}`, background: on ? '#1c4f8f' : '#fff', color: on ? '#fff' : '#334155' }}
+            >
+              {name}
+            </span>
+          )
+        })}
+      </div>
+
       <Section title="Respondents">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {responses.map((r, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: '#334155', padding: '0.3rem 0', borderBottom: '1px solid #f1f5f9' }}>
+          {filtered.map((r, i) => (
+            <div
+              key={i}
+              onClick={() => setFilterName(filterName === (r.name || '(anonymous)') ? null : (r.name || '(anonymous)'))}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: '#334155', padding: '0.3rem 0.4rem', borderBottom: '1px solid #f1f5f9', borderRadius: 6, cursor: 'pointer', background: filterName === (r.name || '(anonymous)') ? '#f0f6ff' : 'transparent' }}
+            >
               <span style={{ fontWeight: 700, minWidth: 160 }}>{r.name || '(anonymous)'}</span>
               <span style={{ color: '#64748b' }}>{r.q1Role || '—'}</span>
               <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.68rem' }}>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : ''}</span>
@@ -175,26 +200,26 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
         </div>
       </Section>
       <Section title="Roles">
-        <BarChart data={counts(responses, 'q1Role')} total={total} />
+        <BarChart data={counts(filtered, 'q1Role')} total={total} />
       </Section>
       <Section title="Most useful views (Q2)">
-        <BarChart data={counts(responses, 'q2Views')} total={total} />
+        <BarChart data={counts(filtered, 'q2Views')} total={total} />
       </Section>
       <Section title="What makes views stand out (Q2b)">
-        <BarChart data={counts(responses, 'q2bStandout')} total={total} />
+        <BarChart data={counts(filtered, 'q2bStandout')} total={total} />
       </Section>
       <Section title="Information that matters most (Q3)">
-        <BarChart data={counts(responses, 'q3Info')} total={total} />
+        <BarChart data={counts(filtered, 'q3Info')} total={total} />
       </Section>
       <Section title="Preferred visualization style (Q4)">
-        <BarChart data={counts(responses, 'q4Style')} total={total} />
+        <BarChart data={counts(filtered, 'q4Style')} total={total} />
       </Section>
       <Section title="Preferred consumption mode (Q6)">
-        <BarChart data={counts(responses, 'q6Consume')} total={total} />
+        <BarChart data={counts(filtered, 'q6Consume')} total={total} />
       </Section>
       <Section title="Chat assistant usefulness rating (Q7)">
         {(() => {
-          const ratings = responses.map(r => r.q6bChatRating).filter((n): n is number => n != null)
+          const ratings = filtered.map(r => r.q6bChatRating).filter((n): n is number => n != null)
           if (ratings.length === 0) return <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>No ratings yet.</p>
           const avg = (ratings.reduce((s, n) => s + n, 0) / ratings.length).toFixed(1)
           const dist: Record<string, number> = {}
@@ -208,7 +233,7 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
         })()}
       </Section>
       <Section title="Conversational assistant usage (Q8)">
-        <BarChart data={counts(responses, 'q7Chat')} total={total} />
+        <BarChart data={counts(filtered, 'q7Chat')} total={total} />
       </Section>
 
       {comments.length > 0 && (
