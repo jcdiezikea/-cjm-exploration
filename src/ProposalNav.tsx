@@ -22,10 +22,16 @@ const PROPOSALS = [
 ]
 
 export function ProposalNav() {
+  const [started, setStarted] = useState(false)
   const [active, setActive] = useState(0)
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
 
   const proposal = PROPOSALS.find((p) => p.id === active)
+
+  function handleStart() {
+    setStarted(true)
+    setActive(1)
+  }
 
   return (
     <div className={active === 0 ? undefined : 'nav-shell'}>
@@ -37,7 +43,7 @@ export function ProposalNav() {
         >
           🏠 Intro
         </button>
-        {PROPOSALS.map((p) => (
+        {started && PROPOSALS.map((p) => (
           <button
             key={p.id}
             type="button"
@@ -50,7 +56,7 @@ export function ProposalNav() {
       </nav>
 
       {active === 0 ? (
-        <Intro onStart={() => setActive(1)} />
+        <Intro onStart={handleStart} />
       ) : proposal ? (
         <div className="proposal-body">
           <proposal.component
