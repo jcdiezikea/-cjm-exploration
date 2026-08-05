@@ -63,6 +63,10 @@ export function Intro({ onStart }: { onStart: () => void }) {
                 <span className="intro-tip-icon">💡</span>
                 <span>Don't just skim — <strong>click, zoom, and interact</strong> with each version. Toggle filters, tap insight cards, and explore the backlog panels to get a real feel for what each format can show you.</span>
               </div>
+              <div className="intro-tip-banner" style={{ marginTop: '0.5rem', background: '#fff5f5', borderColor: '#f5a0a0', borderLeftColor: '#e53e3e' }}>
+                <span className="intro-tip-icon">⚠️</span>
+                <span><strong>The data shown throughout this tool is mocked and does not necessarily correspond to reliable or accurate business information.</strong> It is illustrative only — intended to demonstrate the format, not to inform decisions.</span>
+              </div>
             </div>
           </li>
           <li>
