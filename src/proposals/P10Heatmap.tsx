@@ -9,11 +9,11 @@ function deriveInsights() {
   const highEff  = [...STAGE_METRICS].sort((a, b) => b.effort - a.effort)[0]
   const topConv  = [...STAGE_METRICS].sort((a, b) => b.conversion - a.conversion)[0]
   return [
-    { icon: '🔴', label: 'Lowest NPS',      value: `${worst.nps > 0 ? '+' : ''}${worst.nps}`,  stage: worst.stage,   note: 'Prioritise backlog here first' },
-    { icon: '📉', label: 'Highest drop-off', value: `${highDrop.dropOff}%`,                      stage: highDrop.stage, note: 'Biggest leakage in the funnel' },
-    { icon: '😓', label: 'Highest effort',   value: `${highEff.effort}/10`,                      stage: highEff.stage,  note: 'Customers work hardest here' },
-    { icon: '✅', label: 'Best conversion',  value: `${topConv.conversion}%`,                    stage: topConv.stage,  note: 'Model this stage for others' },
-    { icon: '🌟', label: 'Best NPS',         value: `${bestNPS.nps > 0 ? '+' : ''}${bestNPS.nps}`, stage: bestNPS.stage, note: 'Highest satisfaction score' },
+    { icon: '🔴', label: 'Lowest NPS',      value: `${worst.nps > 0 ? '+' : ''}${worst.nps}`,       stage: worst.stage,    metricKey: 'nps'        as MetricKey, note: 'Prioritise backlog here first' },
+    { icon: '📉', label: 'Highest drop-off', value: `${highDrop.dropOff}%`,                           stage: highDrop.stage,  metricKey: 'dropOff'    as MetricKey, note: 'Biggest leakage in the funnel' },
+    { icon: '😓', label: 'Highest effort',   value: `${highEff.effort}/10`,                           stage: highEff.stage,   metricKey: 'effort'     as MetricKey, note: 'Customers work hardest here' },
+    { icon: '✅', label: 'Best conversion',  value: `${topConv.conversion}%`,                        stage: topConv.stage,   metricKey: 'conversion' as MetricKey, note: 'Model this stage for others' },
+    { icon: '🌟', label: 'Best NPS',         value: `${bestNPS.nps > 0 ? '+' : ''}${bestNPS.nps}`,   stage: bestNPS.stage,   metricKey: 'nps'        as MetricKey, note: 'Highest satisfaction score' },
   ]
 }
 
@@ -108,14 +108,21 @@ export function P10Heatmap({ onStageClick }: ProposalProps) {
       </div>
 
       <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        {HEATMAP_INSIGHTS.map((ins) => (
-          <div key={ins.label} style={{ flex: '1 1 160px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem 1rem' }}>
-            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.icon} {ins.label}</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', lineHeight: 1 }}>{ins.value}</div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1c4f8f', marginTop: 3 }}>{ins.stage}</div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>{ins.note}</div>
-          </div>
-        ))}
+        {HEATMAP_INSIGHTS.map((ins) => {
+          const isActive = sel?.stage === ins.stage && sel?.metric === ins.metricKey
+          return (
+            <div
+              key={ins.label}
+              onClick={() => setSel(isActive ? null : { stage: ins.stage, metric: ins.metricKey })}
+              style={{ flex: '1 1 160px', background: '#fff', border: `2px solid ${isActive ? '#1c4f8f' : '#e2e8f0'}`, borderRadius: 12, padding: '0.75rem 1rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
+            >
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{ins.icon} {ins.label}</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', lineHeight: 1 }}>{ins.value}</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1c4f8f', marginTop: 3 }}>{ins.stage}</div>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>{ins.note}</div>
+            </div>
+          )
+        })}
       </div>
 
       {sel && (
