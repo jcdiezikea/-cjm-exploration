@@ -602,6 +602,27 @@ div:has(> .proposal-desc) > .proposal-desc {
   color: #fff;
 }
 
+.intro-tip-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  background: #fffbeb;
+  border: 1px solid #f7c948;
+  border-left: 4px solid #f7c948;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #5a4000;
+  line-height: 1.5;
+}
+
+.intro-tip-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
 .proposal-card {
   background: #fff;
   border-radius: 16px;

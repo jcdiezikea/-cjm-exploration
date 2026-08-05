@@ -171,29 +171,48 @@ function deriveDesignInsights(points: JourneyPoint[]) {
   const gains = points.filter(p => p.sentiment === 'gain').sort((a, b) => a.y - b.y)
   const pains = points.filter(p => p.sentiment === 'pain').sort((a, b) => b.y - a.y)
 
+  const segW = 100 / CJM_STAGES.length
+  // Per-stage signal counts used by the "Signal balance" detail panel
+  const stageSignals = CJM_STAGES.map((stage, idx) => {
+    const inStage = (p: JourneyPoint) => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5
+    const g = gains.filter(inStage).length
+    const p = pains.filter(inStage).length
+    return { stage, gains: g, pains: p, net: g - p }
+  })
+
   // Stage with most pain points
   const painsByStage = CJM_STAGES.map(stage => {
-    const segW = 100 / CJM_STAGES.length
     const idx = CJM_STAGES.indexOf(stage)
-    const count = pains.filter(p => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5).length
-    return { stage, count }
+    const inStage = (p: JourneyPoint) => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5
+    const stagePains = pains.filter(inStage)
+    return { stage, count: stagePains.length, points: stagePains }
   }).sort((a, b) => b.count - a.count)
 
   // Stage with most gain points (strongest positive stretch)
   const gainsByStage = CJM_STAGES.map(stage => {
-    const segW = 100 / CJM_STAGES.length
     const idx = CJM_STAGES.indexOf(stage)
-    const count = gains.filter(p => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5).length
-    return { stage, count }
+    const inStage = (p: JourneyPoint) => p.x >= idx * segW - segW * 0.5 && p.x < (idx + 1) * segW + segW * 0.5
+    const stageGains = gains.filter(inStage)
+    return { stage, count: stageGains.length, points: stageGains }
   }).sort((a, b) => b.count - a.count)
 
   return {
-    bestMoment:   gains[0] ?? null,
-    worstPain:    pains[0] ?? null,
-    painStage:    painsByStage[0]?.count > 0 ? painsByStage[0] : null,
-    peakStage:    gainsByStage[0]?.count > 0 ? gainsByStage[0] : null,
-    peakCount:    gains.length,
-    painCount:    pains.length,
+    bestMoment:        gains[0] ?? null,
+    worstPain:         pains[0] ?? null,
+    worstPainStage:    (() => {
+      if (!pains[0]) return null
+      const idx = Math.round(pains[0].x / segW)
+      return CJM_STAGES[Math.min(idx, CJM_STAGES.length - 1)] ?? null
+    })(),
+    painStage:         painsByStage[0]?.count > 0 ? painsByStage[0] : null,
+    painStagePoints:   painsByStage[0]?.points ?? [],
+    painsByStage,
+    peakStage:         gainsByStage[0]?.count > 0 ? gainsByStage[0] : null,
+    peakStagePoints:   gainsByStage[0]?.points ?? [],
+    gainsByStage,
+    peakCount:         gains.length,
+    painCount:         pains.length,
+    stageSignals,
   }
 }
 
@@ -234,11 +253,7 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
       value: ins.worstPain.text.length > 55 ? ins.worstPain.text.slice(0, 55) + '…' : ins.worstPain.text,
       color: '#d2001f', bg: '#ffeaea',
       detail: ins.worstPain.text,
-      stage: (() => {
-        const segW = 100 / CJM_STAGES.length
-        const idx = Math.round(ins.worstPain!.x / segW)
-        return CJM_STAGES[Math.min(idx, CJM_STAGES.length - 1)] ?? null
-      })(),
+      stage: ins.worstPainStage,
       hasSuggestions: true,
     },
     ins.painStage && {
@@ -246,7 +261,7 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
       label: 'Most painful stage',
       value: `${ins.painStage.stage} — ${ins.painStage.count} pain point${ins.painStage.count > 1 ? 's' : ''}`,
       color: '#ed6f2c', bg: '#fff3e8',
-      detail: `${ins.painStage.stage} concentrates more pain points than any other stage.`,
+      detail: `${ins.painStage.stage} has the highest concentration of friction — ${ins.painStage.count} pain point${ins.painStage.count > 1 ? 's' : ''} identified.`,
       stage: ins.painStage.stage,
       hasSuggestions: true,
     },
@@ -265,8 +280,8 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
       value: `${ins.peakCount} peaks · ${ins.painCount} pain points`,
       color: '#47607d', bg: '#f5f7fa',
       detail: ins.peakCount > ins.painCount
-        ? `More positive moments than pain points — the journey is broadly working, with targeted friction to address.`
-        : `Pain points outweigh peaks — systemic improvements are needed across the journey.`,
+        ? `${Math.round((ins.peakCount / (ins.peakCount + ins.painCount)) * 100)}% positive signals — the journey is broadly working, with targeted friction to address.`
+        : `${Math.round((ins.painCount / (ins.peakCount + ins.painCount)) * 100)}% of signals are pain points — systemic improvements are needed across the journey.`,
       stage: null as string | null,
       hasSuggestions: false,
     },
@@ -324,6 +339,177 @@ function DesignTab({ points }: { points: JourneyPoint[] }) {
         <div style={{ marginTop: '1rem', background: '#fff', border: `1px solid ${active.color}44`, borderRadius: 14, padding: '1rem' }}>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: active.color, marginBottom: 6 }}>{active.label}</div>
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.88rem', color: '#2f3237', lineHeight: 1.6 }}>{active.detail}</p>
+
+          {active.id === 'pain' && ins.worstPain && ins.worstPainStage && (() => {
+            const metrics = STAGE_METRICS.find(m => m.stage === ins.worstPainStage)
+            const stageAllPains = ins.painsByStage.find(s => s.stage === ins.worstPainStage)
+            return (
+              <>
+                <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Stage context — {ins.worstPainStage}</div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                  {[
+                    { label: 'NPS', value: `${metrics && metrics.nps > 0 ? '+' : ''}${metrics?.nps ?? '—'}`, good: (metrics?.nps ?? 0) >= 10 },
+                    { label: 'Conversion', value: `${metrics?.conversion ?? '—'}%`, good: (metrics?.conversion ?? 0) >= 70 },
+                    { label: 'Drop-off', value: `${metrics?.dropOff ?? '—'}%`, good: (metrics?.dropOff ?? 100) <= 20 },
+                    { label: 'Effort', value: `${metrics?.effort ?? '—'}/10`, good: (metrics?.effort ?? 10) <= 4 },
+                    { label: 'Pain points', value: `${stageAllPains?.count ?? 1}`, good: false },
+                  ].map(({ label, value, good }) => (
+                    <div key={label} style={{ padding: '0.4rem 0.75rem', borderRadius: 8, background: good ? '#e6f4ea' : '#ffeaea', border: `1px solid ${good ? '#a3d9af' : '#f5b0b0'}` }}>
+                      <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{label}</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: good ? '#149238' : '#d2001f' }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+                {stageAllPains && stageAllPains.count > 1 && <>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>All pain points in this stage</div>
+                  <div style={{ display: 'grid', gap: '0.35rem', marginBottom: '1rem' }}>
+                    {stageAllPains.points.map((pt, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '0.4rem 0.6rem', background: pt.text === ins.worstPain!.text ? '#ffeaea' : '#fafbfc', border: `1px solid ${pt.text === ins.worstPain!.text ? '#f5b0b0' : '#e2e8f0'}`, borderRadius: 8, fontSize: '0.82rem', color: '#2f3237' }}>
+                        <span style={{ color: '#d2001f', fontWeight: 700, flexShrink: 0 }}>↓</span>
+                        {pt.text}
+                        {pt.text === ins.worstPain!.text && <span style={{ marginLeft: 'auto', fontSize: '0.68rem', fontWeight: 700, color: '#d2001f', flexShrink: 0 }}>Worst</span>}
+                      </div>
+                    ))}
+                  </div>
+                </>}
+              </>
+            )
+          })()}
+
+          {active.id === 'painstage' && ins.painStage && (() => {
+            const metrics = STAGE_METRICS.find(m => m.stage === ins.painStage!.stage)
+            const maxPains = ins.painsByStage[0]?.count || 1
+            return (
+              <>
+                <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Pain points by stage</div>
+                <div style={{ display: 'grid', gap: '0.4rem', marginBottom: '1rem' }}>
+                  {ins.painsByStage.filter(s => s.count > 0).map((s, i) => (
+                    <div key={s.stage} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', width: 16, textAlign: 'right' }}>{i + 1}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: s.stage === ins.painStage!.stage ? 700 : 400, color: s.stage === ins.painStage!.stage ? '#d2001f' : '#2f3237', minWidth: 90 }}>{s.stage}</span>
+                      <div style={{ flex: 1, height: 8, background: '#fde8e8', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(s.count / maxPains) * 100}%`, background: s.stage === ins.painStage!.stage ? '#d2001f' : '#e89090', borderRadius: 999 }} />
+                      </div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d2001f', width: 24, textAlign: 'right' }}>{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {ins.painStagePoints.length > 0 && <>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>What's causing the friction</div>
+                  <div style={{ display: 'grid', gap: '0.35rem', marginBottom: '1rem' }}>
+                    {ins.painStagePoints.map((pt, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '0.4rem 0.6rem', background: '#ffeaea', borderRadius: 8, fontSize: '0.82rem', color: '#7a1c1c' }}>
+                        <span style={{ color: '#d2001f', fontWeight: 700, flexShrink: 0 }}>↓</span>
+                        {pt.text}
+                      </div>
+                    ))}
+                  </div>
+                </>}
+
+                {metrics && <>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Stage metrics</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'NPS', value: `${metrics.nps > 0 ? '+' : ''}${metrics.nps}`, good: metrics.nps >= 10 },
+                      { label: 'Conversion', value: `${metrics.conversion}%`, good: metrics.conversion >= 70 },
+                      { label: 'Drop-off', value: `${metrics.dropOff}%`, good: metrics.dropOff <= 20 },
+                      { label: 'Effort', value: `${metrics.effort}/10`, good: metrics.effort <= 4 },
+                    ].map(({ label, value, good }) => (
+                      <div key={label} style={{ padding: '0.4rem 0.75rem', borderRadius: 8, background: good ? '#e6f4ea' : '#ffeaea', border: `1px solid ${good ? '#a3d9af' : '#f5b0b0'}` }}>
+                        <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{label}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: good ? '#149238' : '#d2001f' }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>}
+              </>
+            )
+          })()}
+
+          {active.id === 'peakstage' && ins.peakStage && (() => {
+            const metrics = STAGE_METRICS.find(m => m.stage === ins.peakStage!.stage)
+            const maxPeaks = ins.gainsByStage[0]?.count || 1
+            return (
+              <>
+                {/* Ranked stage comparison */}
+                <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Peak moments by stage</div>
+                <div style={{ display: 'grid', gap: '0.4rem', marginBottom: '1rem' }}>
+                  {ins.gainsByStage.filter(s => s.count > 0).map((s, i) => (
+                    <div key={s.stage} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', width: 16, textAlign: 'right' }}>{i + 1}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: s.stage === ins.peakStage!.stage ? 700 : 400, color: s.stage === ins.peakStage!.stage ? '#1c4f8f' : '#2f3237', minWidth: 90 }}>{s.stage}</span>
+                      <div style={{ flex: 1, height: 8, background: '#e8f0fb', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(s.count / maxPeaks) * 100}%`, background: s.stage === ins.peakStage!.stage ? '#1c4f8f' : '#93b4e0', borderRadius: 999 }} />
+                      </div>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1c4f8f', width: 24, textAlign: 'right' }}>{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* What's driving the peaks */}
+                {ins.peakStagePoints.length > 0 && <>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>What's driving this stage</div>
+                  <div style={{ display: 'grid', gap: '0.35rem', marginBottom: '1rem' }}>
+                    {ins.peakStagePoints.map((pt, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '0.4rem 0.6rem', background: '#f0f6ff', borderRadius: 8, fontSize: '0.82rem', color: '#1c3a6e' }}>
+                        <span style={{ color: '#149238', fontWeight: 700, flexShrink: 0 }}>↑</span>
+                        {pt.text}
+                      </div>
+                    ))}
+                  </div>
+                </>}
+
+                {/* Key metrics for this stage */}
+                {metrics && <>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Stage metrics</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'NPS', value: `${metrics.nps > 0 ? '+' : ''}${metrics.nps}`, good: metrics.nps >= 10 },
+                      { label: 'Conversion', value: `${metrics.conversion}%`, good: metrics.conversion >= 70 },
+                      { label: 'Drop-off', value: `${metrics.dropOff}%`, good: metrics.dropOff <= 20 },
+                      { label: 'Effort', value: `${metrics.effort}/10`, good: metrics.effort <= 4 },
+                    ].map(({ label, value, good }) => (
+                      <div key={label} style={{ padding: '0.4rem 0.75rem', borderRadius: 8, background: good ? '#e6f4ea' : '#ffeaea', border: `1px solid ${good ? '#a3d9af' : '#f5b0b0'}` }}>
+                        <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{label}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: good ? '#149238' : '#d2001f' }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>}
+              </>
+            )
+          })()}
+
+          {active.id === 'balance' && (
+            <>
+              <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Signal breakdown by stage</div>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {ins.stageSignals.map(({ stage, gains: g, pains: p, net }) => {
+                  const total = g + p || 1
+                  const gainPct = Math.round((g / total) * 100)
+                  const netPositive = net > 0
+                  const netNeutral  = net === 0
+                  return (
+                    <div key={stage} style={{ background: '#fafbfc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.6rem 0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#111', minWidth: 100 }}>{stage}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#149238', fontWeight: 600 }}>↑ {g} peak{g !== 1 ? 's' : ''}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#d2001f', fontWeight: 600 }}>↓ {p} pain{p !== 1 ? 's' : ''}</span>
+                        <span style={{ marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, color: netPositive ? '#149238' : netNeutral ? '#94a3b8' : '#d2001f' }}>
+                          {net > 0 ? '+' : ''}{net} net
+                        </span>
+                      </div>
+                      {/* Gains/pains proportion bar */}
+                      <div style={{ height: 6, background: '#ffeaea', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${gainPct}%`, background: '#149238', borderRadius: 999, transition: 'width 0.3s' }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
 
           {active.hasSuggestions && stageSuggestions.length > 0 && (
             <>
@@ -390,8 +576,77 @@ function EngineeringTab() {
 }
 
 function RoadmapTab() {
+  const t1 = BACKLOG_ITEMS.filter(b => b.horizon === 'T1')
+  const t2 = BACKLOG_ITEMS.filter(b => b.horizon === 'T2')
+  const t3 = BACKLOG_ITEMS.filter(b => b.horizon === 'T3')
+  const totalSP  = BACKLOG_ITEMS.reduce((s, b) => s + b.storyPoints, 0)
+  const t1SP     = t1.reduce((s, b) => s + b.storyPoints, 0)
+  const mustHave = BACKLOG_ITEMS.filter(b => b.priority === 'must-have').length
+
+  const t1Stages     = new Set(t1.map(b => b.stage))
+  const coveredCount = CJM_STAGES.filter(s => t1Stages.has(s)).length
+
+  // Negative-NPS stages with no T1 work — potential planning gap
+  const painGaps = STAGE_METRICS
+    .filter(m => m.nps < 0 && !t1Stages.has(m.stage))
+    .sort((a, b) => a.nps - b.nps)
+    .slice(0, 2)
+
+  const coveredPainStage = STAGE_METRICS
+    .filter(m => m.nps < 0 && t1Stages.has(m.stage))
+    .sort((a, b) => a.nps - b.nps)[0] ?? null
+
+  const topInvestStage = CJM_STAGES
+    .map(stage => ({ stage, sp: t1.filter(b => b.stage === stage).reduce((s, b) => s + b.storyPoints, 0) }))
+    .sort((a, b) => b.sp - a.sp)[0]
+
+  const statBox = (label: string, value: string | number, sub?: string) => (
+    <div style={{ padding: '0.55rem 0.85rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, minWidth: 80 }}>
+      <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{value}</div>
+      {sub && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 1 }}>{sub}</div>}
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {/* ── Insight header ── */}
+      <div style={{ background: '#f8faff', border: '1px solid #c7d8f5', borderRadius: 14, padding: '1rem 1.1rem' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c4f8f', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Roadmap snapshot</div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          {statBox('Committed (T1)', t1.length, `${t1SP} sp`)}
+          {statBox('Pipeline (T2)', t2.length)}
+          {statBox('Future (T3)', t3.length)}
+          {statBox('Total SP', totalSP)}
+          {statBox('Must-have', mustHave, 'items')}
+          {statBox('Stage coverage', `${coveredCount}/7`, 'stages with T1')}
+        </div>
+        <div style={{ display: 'grid', gap: '0.5rem' }}>
+          {topInvestStage?.sp > 0 && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0.55rem 0.75rem', background: '#e8f0fb', border: '1px solid #b3ccf0', borderRadius: 9, fontSize: '0.82rem', color: '#1c3a6e' }}>
+              <span style={{ fontWeight: 700, flexShrink: 0 }}>📌</span>
+              <span><strong>{topInvestStage.stage}</strong> has the highest T1 investment — <strong>{topInvestStage.sp} SP</strong> committed. Verify delivery scope aligns with the customer pain points in this stage.</span>
+            </div>
+          )}
+          {coveredPainStage && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0.55rem 0.75rem', background: '#e6f4ea', border: '1px solid #a3d9af', borderRadius: 9, fontSize: '0.82rem', color: '#0e3d1f' }}>
+              <span style={{ fontWeight: 700, flexShrink: 0 }}>✅</span>
+              <span><strong>{coveredPainStage.stage}</strong> has a negative NPS of <strong>{coveredPainStage.nps}</strong> and is covered by committed T1 work — good prioritisation signal.</span>
+            </div>
+          )}
+          {painGaps.map(m => (
+            <div key={m.stage} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0.55rem 0.75rem', background: '#fff8ec', border: '1px solid #f7c948', borderRadius: 9, fontSize: '0.82rem', color: '#5a3e00' }}>
+              <span style={{ fontWeight: 700, flexShrink: 0 }}>⚠️</span>
+              <span><strong>{m.stage}</strong> has a negative NPS of <strong>{m.nps}</strong> but no committed T1 work. Consider whether T2 items here are adequately prioritised relative to customer impact.</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0.55rem 0.75rem', background: '#fafbfc', border: '1px solid #e2e8f0', borderRadius: 9, fontSize: '0.82rem', color: '#2f3237' }}>
+            <span style={{ fontWeight: 700, flexShrink: 0 }}>ℹ️</span>
+            <span>T1 covers <strong>{coveredCount} of 7</strong> journey stages. {coveredCount < 6 ? 'Some stages have no near-term commitment — confirm gaps are intentional or flag for re-prioritisation.' : 'Strong end-to-end coverage across the full journey.'}</span>
+          </div>
+        </div>
+      </div>
+
       {(['T1', 'T2', 'T3'] as const).map((h) => (
         <div key={h} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '1rem' }}>
           <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>

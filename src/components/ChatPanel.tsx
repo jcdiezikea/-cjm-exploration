@@ -404,6 +404,16 @@ export function ChatPanel() {
           </div>
         </div>
 
+        {/* Disclaimer banner — shown until first user message */}
+        {isFirstMessage && (
+          <div style={{ padding: '0.6rem 0.75rem', background: '#fffbeb', borderBottom: '1px solid #f7c948', display: 'flex', gap: 8, alignItems: 'flex-start', flexShrink: 0 }}>
+            <span style={{ fontSize: '0.8rem', flexShrink: 0, marginTop: 1 }}>⚡</span>
+            <p style={{ margin: 0, fontSize: '0.68rem', color: '#5a3e00', lineHeight: 1.5 }}>
+              <strong>Rule-based assistant.</strong> Responses are generated from structured CJM data — not a live AI model. A future version will connect to an LLM for richer, context-aware answers.
+            </p>
+          </div>
+        )}
+
         {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {messages.map((msg, i) => (

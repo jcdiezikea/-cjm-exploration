@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { JSONBIN_KEY, JSONBIN_COLLECTION, ADMIN_PASSWORD } from './surveyConfig.ts'
 
 type Response = {
+  name: string
   q1Role: string; q1Other: string
-  q2Views: string[]
+  q2Views: string[]; q2None: boolean; q2Open: string
   q2bStandout: string[]; q2bOpen: string
   q3Info: string[]; q3Open: string
-  q4Style: string[]; q4bWhy: string
+  q4Style: string[]; q4Open: string; q4bWhy: string
   q5Missing: string
   q6Consume: string[]; q6Open: string
+  q6bChatRating: number | null
   q7Chat: string[]; q7Open: string
   q8Other: string
   submittedAt: string
@@ -72,7 +74,9 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
         headers: { 'X-Master-Key': JSONBIN_KEY },
       })
       const listData = await listRes.json()
-      const ids: string[] = (listData.result ?? []).map((b: { id: string }) => b.id)
+      // API returns a bare array, not { result: [] }
+      const items = Array.isArray(listData) ? listData : (listData.result ?? [])
+      const ids: string[] = items.map((b: { record: string }) => b.record)
       const bins = await Promise.all(
         ids.map(id =>
           fetch(`https://api.jsonbin.io/v3/b/${id}`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
@@ -132,18 +136,19 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
 
   const total = responses.length
   const openFields: { q: string; field: keyof Response }[] = [
-    { q: 'What makes views stand out (Q2b)', field: 'q2bOpen' },
-    { q: 'Most important information (Q3)',  field: 'q3Open'  },
-    { q: 'Why that format (Q4b)',            field: 'q4bWhy'  },
-    { q: 'Missing information (Q5)',         field: 'q5Missing'},
-    { q: 'Consumption preference (Q6)',      field: 'q6Open'  },
-    { q: 'Chat assistant usage (Q7)',        field: 'q7Open'  },
-    { q: 'Other feedback (Q8)',              field: 'q8Other' },
+    { q: 'Views open (Q2)',                field: 'q2Open'   },
+    { q: 'What makes views stand out (Q2)', field: 'q2bOpen' },
+    { q: 'Most important information (Q3)', field: 'q3Open'  },
+    { q: 'Why that format (Q4)',            field: 'q4Open'  },
+    { q: 'Missing information (Q5)',        field: 'q5Missing'},
+    { q: 'Consumption preference (Q6)',     field: 'q6Open'  },
+    { q: 'Chat assistant usage (Q8)',       field: 'q7Open'  },
+    { q: 'Other feedback (Q9)',             field: 'q8Other' },
   ]
   const comments = openFields.flatMap(({ q, field }) =>
     responses
       .filter(r => typeof r[field] === 'string' && (r[field] as string).trim())
-      .map(r => ({ q, answer: r[field] as string, role: r.q1Role || '—' }))
+      .map(r => ({ q, answer: r[field] as string, role: r.q1Role || '—', name: r.name || '—' }))
   )
 
   return (
@@ -158,6 +163,17 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
+      <Section title="Respondents">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {responses.map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: '#334155', padding: '0.3rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontWeight: 700, minWidth: 160 }}>{r.name || '(anonymous)'}</span>
+              <span style={{ color: '#64748b' }}>{r.q1Role || '—'}</span>
+              <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.68rem' }}>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : ''}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
       <Section title="Roles">
         <BarChart data={counts(responses, 'q1Role')} total={total} />
       </Section>
@@ -176,7 +192,22 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
       <Section title="Preferred consumption mode (Q6)">
         <BarChart data={counts(responses, 'q6Consume')} total={total} />
       </Section>
-      <Section title="Conversational assistant usage (Q7)">
+      <Section title="Chat assistant usefulness rating (Q7)">
+        {(() => {
+          const ratings = responses.map(r => r.q6bChatRating).filter((n): n is number => n != null)
+          if (ratings.length === 0) return <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>No ratings yet.</p>
+          const avg = (ratings.reduce((s, n) => s + n, 0) / ratings.length).toFixed(1)
+          const dist: Record<string, number> = {}
+          ratings.forEach(n => { dist[String(n)] = (dist[String(n)] ?? 0) + 1 })
+          return (
+            <>
+              <p style={{ fontSize: '0.88rem', color: '#1e293b', margin: '0 0 0.75rem' }}>Average: <strong>{avg} / 7</strong> ({ratings.length} rating{ratings.length !== 1 ? 's' : ''})</p>
+              <BarChart data={dist} total={ratings.length} />
+            </>
+          )
+        })()}
+      </Section>
+      <Section title="Conversational assistant usage (Q8)">
         <BarChart data={counts(responses, 'q7Chat')} total={total} />
       </Section>
 
@@ -185,7 +216,7 @@ export function SurveyAdmin({ onClose }: { onClose: () => void }) {
           {comments.map((c, i) => (
             <div key={i} style={{ marginBottom: '0.75rem', padding: '0.75rem', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 3 }}>
-                {c.q} · {c.role}
+                {c.q} · {c.name} ({c.role})
               </div>
               <div style={{ fontSize: '0.82rem', color: '#334155' }}>{c.answer}</div>
             </div>
