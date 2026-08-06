@@ -67,6 +67,7 @@ export function ProposalNav() {
   function handleStart() {
     setStarted(true)
     setActive(1)
+    window.scrollTo(0, 0)
   }
 
   return (
@@ -75,7 +76,7 @@ export function ProposalNav() {
         <button
           type="button"
           className={active === 0 ? 'active' : ''}
-          onClick={() => setActive(0)}
+          onClick={() => { setActive(0); window.scrollTo(0, 0) }}
         >
           🏠 Intro
         </button>
@@ -84,7 +85,7 @@ export function ProposalNav() {
             key={p.id}
             type="button"
             className={active === p.id ? 'active' : ''}
-            onClick={() => setActive(p.id)}
+            onClick={() => { setActive(p.id); window.scrollTo(0, 0) }}
           >
             {p.label}
           </button>
