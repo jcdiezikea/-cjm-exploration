@@ -4,7 +4,7 @@ export function Intro({ onStart }: { onStart: () => void }) {
       <div className="intro-hero">
         <span className="intro-kicker">IKEA · Home Planning Journey · FY27</span>
         <h1 className="intro-heading">
-          Exploring the Customer<br />Journey Map
+          Exploring the Customer<br />Journey Map FY27
         </h1>
         <p className="intro-sub">
           Five different ways to visualise and navigate the same data — each designed to
