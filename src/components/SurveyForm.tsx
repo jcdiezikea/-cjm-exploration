@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Pill from '@ingka/pill'
 import { JSONBIN_KEY, JSONBIN_COLLECTION } from './surveyConfig.ts'
 
 const ROLES   = ['Business stakeholder', 'Design', 'Engineering', 'Roadmap & Planning', 'Other']
@@ -66,26 +67,19 @@ function Chips({ options, selected, onToggle, max }: {
   options: string[]; selected: string[]; onToggle: (v: string) => void; max?: number
 }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.5rem' }}>
       {options.map(o => {
         const on  = selected.includes(o)
         const dim = !on && max !== undefined && selected.length >= max
         return (
-          <span
+          <Pill
             key={o}
-            onClick={() => !dim && onToggle(o)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '6px 14px', borderRadius: 999, fontSize: '0.8rem',
-              border: `1.5px solid ${on ? '#1c4f8f' : '#e2e8f0'}`,
-              background: on ? '#1c4f8f' : dim ? '#f8fafc' : '#fff',
-              color: on ? '#fff' : dim ? '#cbd5e1' : '#334155',
-              cursor: dim ? 'default' : 'pointer', userSelect: 'none', transition: 'all 0.14s',
-            }}
-          >
-            {on && <span style={{ fontSize: '0.62rem' }}>✓</span>}
-            {o}
-          </span>
+            label={o}
+            selected={on}
+            disabled={dim}
+            size="small"
+            onClick={() => onToggle(o)}
+          />
         )
       })}
     </div>

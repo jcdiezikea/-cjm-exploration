@@ -623,6 +623,10 @@ div:has(> .proposal-desc) > .proposal-desc {
   margin-top: 0.05rem;
 }
 
+.intro-skapa-msg {
+  margin-top: 0.75rem;
+}
+
 .proposal-card {
   background: #fff;
   border-radius: 16px;

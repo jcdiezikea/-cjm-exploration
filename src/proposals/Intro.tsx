@@ -1,3 +1,6 @@
+import Button from '@ingka/button'
+import InlineMessage from '@ingka/inline-message'
+
 export function Intro({ onStart }: { onStart: () => void }) {
   return (
     <div className="intro-page">
@@ -59,14 +62,18 @@ export function Intro({ onStart }: { onStart: () => void }) {
             <div>
               <strong>Navigate and explore the variations</strong>
               <p>Use the tabs above to switch between P1 – P5. Each view tells a different story — spend a few minutes in each one.</p>
-              <div className="intro-tip-banner">
-                <span className="intro-tip-icon">💡</span>
-                <span>Don't just skim — <strong>click, zoom, and interact</strong> with each version. Toggle filters, tap insight cards, and explore the backlog panels to get a real feel for what each format can show you.</span>
-              </div>
-              <div className="intro-tip-banner" style={{ marginTop: '0.5rem', background: '#fff5f5', borderColor: '#f5a0a0', borderLeftColor: '#e53e3e' }}>
-                <span className="intro-tip-icon">⚠️</span>
-                <span><strong>The data shown throughout this tool is mocked and does not necessarily correspond to reliable or accurate business information.</strong> It is illustrative only — intended to demonstrate the format, not to inform decisions.</span>
-              </div>
+              <InlineMessage
+                variant="cautionary"
+                subtle
+                className="intro-skapa-msg"
+                body={<>Don't just skim — <strong>click, zoom, and interact</strong> with each version. Toggle filters, tap insight cards, and explore the backlog panels to get a real feel for what each format can show you.</>}
+              />
+              <InlineMessage
+                variant="negative"
+                subtle
+                className="intro-skapa-msg"
+                body={<><strong>The data shown throughout this tool is mocked and does not necessarily correspond to reliable or accurate business information.</strong> It is illustrative only — intended to demonstrate the format, not to inform decisions.</>}
+              />
             </div>
           </li>
           <li>
@@ -80,9 +87,7 @@ export function Intro({ onStart }: { onStart: () => void }) {
       </div>
 
       <div className="intro-cta">
-        <button type="button" className="intro-cta-btn" onClick={onStart}>
-          Start exploring →
-        </button>
+        <Button type="primary" text="Start exploring →" onClick={onStart} />
       </div>
     </div>
   )
